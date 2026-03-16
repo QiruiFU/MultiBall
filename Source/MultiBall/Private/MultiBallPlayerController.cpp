@@ -17,14 +17,23 @@ AMultiBallPlayerController::AMultiBallPlayerController()
 void AMultiBallPlayerController::BeginPlay()
 {
     Super::BeginPlay();
-
+    UE_LOG(LogTemp, Log, TEXT("Adding UI"));
     if (IsLocalController() && ShopWidgetClass)
     {
         UUserWidget* ShopWidget = CreateWidget<UUserWidget>(this, ShopWidgetClass);
         if (ShopWidget)
         {
+            UE_LOG(LogTemp, Log, TEXT("Added"));
             ShopWidget->AddToViewport();
         }
+        else
+        {
+            UE_LOG(LogTemp, Log, TEXT("Not Added"));
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Log, TEXT("Not Added"));
     }
 }
 
