@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "Blueprint/UserWidget.h"
 #include "PlaceableActor.h"
 #include "MultiBallPlayerController.generated.h"
 
@@ -19,14 +18,22 @@ class MULTIBALL_API AMultiBallPlayerController : public APlayerController
 public:
     AMultiBallPlayerController();
 
-    /** Widget class to spawn as the shop HUD. Set in Blueprint defaults. */
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
-    TSubclassOf<UUserWidget> ShopWidgetClass;
+    UFUNCTION(BlueprintCallable, Category = "Shop")
+    void SelectPlaceable(TSubclassOf<APlaceableActor> PlaceableClass);
 
     UFUNCTION(Server, Reliable, WithValidation)
     void PurchasePlaceable(TSubclassOf<APlaceableActor> PlaceableClass, FVector Location);
 
+    UPROPERTY(BlueprintReadWrite, Category = "Shop")
+    TSubclassOf<APlaceableActor> SelectedPlaceableClass;
+
 protected:
     virtual void BeginPlay() override;
+    virtual void SetupInputComponent() override;
+
+    void HandlePlacementClick();
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+    TSubclassOf<class UUserWidget> ShopWidgetClass;
 	
 };

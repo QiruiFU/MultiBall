@@ -1,11 +1,14 @@
 // Copyright Autonomix. All Rights Reserved.
 
 #include "MultiBallGameMode.h"
-#include "MultiBallPlayerState.h"
-#include "MultiBallPlayerController.h"
+#include "Player/MultiBallPlayerController.h"
+#include "UObject/ConstructorHelpers.h"
 
 AMultiBallGameMode::AMultiBallGameMode()
 {
-    PlayerStateClass = AMultiBallPlayerState::StaticClass();
-    PlayerControllerClass = AMultiBallPlayerController::StaticClass();
+	// Use our custom PlayerController class
+	PlayerControllerClass = AMultiBallPlayerController::StaticClass();
+
+	// Set default pawn class to our custom pawn class
+	// DefaultPawnClass = ADefaultPawn::StaticClass();
 }

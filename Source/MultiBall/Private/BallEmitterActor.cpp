@@ -1,0 +1,117 @@
+// Copyright Autonomix. All Rights Reserved.
+
+#include "BallEmitterActor.h"
+#include "BallActor.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/World.h"
+
+ABallEmitterActor::ABallEmitterActor()
+{
+	PrimaryActorTick.bCanEverTick = true;
+
+	EmitterMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EmitterMesh"));
+	EmitterMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SetRootComponent(EmitterMesh);
+
+	// Defaults
+	DropInterval = 1.5f;
+	BallsPerRound = 5;
+	OscillationSpeed = 2.0f;
+	OscillationRange = 200.0f;
+
+	// State
+	bIsDropping = false;
+	BallsRemaining = 0;
+	DropTimer = 0.0f;
+	ActiveBallCount = 0;
+	OscillationTime = 0.0f;
+}
+
+void ABallEmitterActor::BeginPlay()
+{
+	Super::BeginPlay();
+	OriginLocation = GetActorLocation();
+}
+
+void ABallEmitterActor::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// Oscillate horizontally
+	OscillationTime += DeltaTime;
+	FVector NewLocation = OriginLocation;
+	NewLocation.X += FMath::Sin(OscillationTime * OscillationSpeed) * OscillationRange;
+	SetActorLocation(NewLocation);
+
+	// Handle automatic drop sequence
+	if (bIsDropping && BallsRemaining > 0)
+	{
+		DropTimer += DeltaTime;
+		if (DropTimer >= DropInterval)
+		{
+			DropTimer = 0.0f;
+			DropBall();
+			BallsRemaining--;
+
+			if (BallsRemaining <= 0)
+			{
+				bIsDropping = false;
+				UE_LOG(LogTemp, Log, TEXT("Emitter: All balls dropped. Waiting for them to settle..."));
+			}
+		}
+	}
+}
+
+void ABallEmitterActor::StartDropSequence(int32 NumBalls)
+{
+	BallsRemaining = NumBalls > 0 ? NumBalls : BallsPerRound;
+	bIsDropping = true;
+	DropTimer = DropInterval; // Drop the first ball immediately
+	ActiveBallCount = 0;
+
+	UE_LOG(LogTemp, Log, TEXT("Emitter: Starting drop sequence with %d balls."), BallsRemaining);
+}
+
+void ABallEmitterActor::StopDropSequence()
+{
+	bIsDropping = false;
+	BallsRemaining = 0;
+	UE_LOG(LogTemp, Log, TEXT("Emitter: Drop sequence stopped."));
+}
+
+void ABallEmitterActor::DropBall()
+{
+	if (!BallClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Emitter: No BallClass set!"));
+		return;
+	}
+
+	FVector SpawnLocation = GetActorLocation();
+	FRotator SpawnRotation = FRotator::ZeroRotator;
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+
+	ABallActor* NewBall = GetWorld()->SpawnActor<ABallActor>(BallClass, SpawnLocation, SpawnRotation, SpawnParams);
+	if (NewBall)
+	{
+		ActiveBallCount++;
+		NewBall->OnDestroyed.AddDynamic(this, &ABallEmitterActor::OnBallDestroyed);
+
+		UE_LOG(LogTemp, Log, TEXT("Emitter: Dropped ball. Active: %d"), ActiveBallCount);
+	}
+}
+
+void ABallEmitterActor::OnBallDestroyed(AActor* DestroyedActor)
+{
+	ActiveBallCount--;
+	UE_LOG(LogTemp, Log, TEXT("Emitter: Ball destroyed. Active: %d, Remaining: %d"), ActiveBallCount, BallsRemaining);
+
+	// If no more balls are active and none are remaining, signal completion
+	if (ActiveBallCount <= 0 && BallsRemaining <= 0 && !bIsDropping)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Emitter: All balls finished!"));
+		OnAllBallsFinished.Broadcast();
+	}
+}

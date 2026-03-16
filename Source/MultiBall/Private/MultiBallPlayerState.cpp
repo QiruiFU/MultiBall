@@ -5,12 +5,20 @@
 
 AMultiBallPlayerState::AMultiBallPlayerState()
 {
-    PlayerCoins = 0;
+	PlayerCoins = 0;
+	RoundChips = 0;
+	RoundMultiplier = 1.0f;
+	TotalScore = 0;
+	CurrentRound = 1;
 }
 
 void AMultiBallPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-    DOREPLIFETIME(AMultiBallPlayerState, PlayerCoins);
+	DOREPLIFETIME(AMultiBallPlayerState, PlayerCoins);
+	DOREPLIFETIME(AMultiBallPlayerState, RoundChips);
+	DOREPLIFETIME(AMultiBallPlayerState, RoundMultiplier);
+	DOREPLIFETIME(AMultiBallPlayerState, TotalScore);
+	DOREPLIFETIME(AMultiBallPlayerState, CurrentRound);
 }

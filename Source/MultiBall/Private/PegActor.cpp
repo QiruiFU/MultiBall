@@ -1,19 +1,34 @@
 // Copyright Autonomix. All Rights Reserved.
 
 #include "PegActor.h"
+#include "BallActor.h"
+#include "Components/SphereComponent.h"
 
 APegActor::APegActor()
 {
-    // Set this actor to call Tick() every frame. You can turn this off to improve performance if you don't need it.
-    PrimaryActorTick.bCanEverTick = true;
+	PlaceableType = EPlaceableType::Peg;
+	Cost = 10;
+	ChipValue = 5;
+	MultiplierValue = 1.0f;
+	MaxDurability = 0; // Pegs are indestructible by default
+
+	// Smaller collision for pegs
+	if (CollisionComponent)
+	{
+		CollisionComponent->InitSphereRadius(15.0f);
+	}
 }
 
 void APegActor::BeginPlay()
 {
-    Super::BeginPlay();
+	Super::BeginPlay();
 }
 
-void APegActor::Tick(float DeltaTime)
+void APegActor::OnBallHit(ABallActor* Ball)
 {
-    Super::Tick(DeltaTime);
+	// Call base scoring logic
+	Super::OnBallHit(Ball);
+
+	// Peg-specific visual feedback can be added here
+	UE_LOG(LogTemp, Log, TEXT("Peg %s was hit!"), *GetName());
 }

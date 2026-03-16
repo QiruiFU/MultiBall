@@ -7,7 +7,7 @@
 #include "PegActor.generated.h"
 
 /**
- * 
+ * A standard peg that adds chips to balls on collision.
  */
 UCLASS()
 class MULTIBALL_API APegActor : public APlaceableActor
@@ -15,12 +15,11 @@ class MULTIBALL_API APegActor : public APlaceableActor
 	GENERATED_BODY()
 
 public:
-    APegActor();
+	APegActor();
+
+	/** Override for peg-specific hit behavior (e.g. visual flash). */
+	virtual void OnBallHit(ABallActor* Ball) override;
 
 protected:
-    virtual void BeginPlay() override;
-
-public:
-    virtual void Tick(float DeltaTime) override;
-	
+	virtual void BeginPlay() override;
 };

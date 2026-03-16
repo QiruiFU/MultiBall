@@ -5,10 +5,12 @@
 #include "PlaceableActor.h"
 #include "Engine/World.h"
 #include "Blueprint/UserWidget.h"
-
+#include "GameFramework/Pawn.h"
 
 AMultiBallPlayerController::AMultiBallPlayerController()
 {
+    bShowMouseCursor = true;
+    bEnableClickEvents = true;
 }
 
 void AMultiBallPlayerController::BeginPlay()
@@ -21,6 +23,37 @@ void AMultiBallPlayerController::BeginPlay()
         if (ShopWidget)
         {
             ShopWidget->AddToViewport();
+        }
+    }
+}
+
+void AMultiBallPlayerController::SetupInputComponent()
+{
+    Super::SetupInputComponent();
+
+    InputComponent->BindAction("PlaceItem", IE_Pressed, this, &AMultiBallPlayerController::HandlePlacementClick);
+}
+
+void AMultiBallPlayerController::SelectPlaceable(TSubclassOf<APlaceableActor> PlaceableClass)
+{
+    SelectedPlaceableClass = PlaceableClass;
+}
+
+void AMultiBallPlayerController::HandlePlacementClick()
+{
+    if (SelectedPlaceableClass)
+    {
+        FVector WorldLocation, WorldDirection;
+        if (DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
+        {
+            FHitResult HitResult;
+            FCollisionQueryParams Params;
+            Params.AddIgnoredActor(GetPawn());
+
+            if (GetWorld()->LineTraceSingleByChannel(HitResult, WorldLocation, WorldLocation + (WorldDirection * 10000.0f), ECC_Visibility, Params))
+            {
+                PurchasePlaceable(SelectedPlaceableClass, HitResult.Location);
+            }
         }
     }
 }
