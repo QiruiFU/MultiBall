@@ -35,5 +35,11 @@ protected:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
     TSubclassOf<class UUserWidget> ShopWidgetClass;
+
+private:
+    // Debug key bindings for testing game loop
+    void DebugEnterShop();
+    void DebugEnterBuild();
+    void DebugEnterDrop();
 	
 };

@@ -2,6 +2,7 @@
 
 #include "MultiBallPlayerController.h"
 #include "MultiBallPlayerState.h"
+#include "MultiBallGameMode.h"
 #include "PlaceableActor.h"
 #include "Engine/World.h"
 #include "Blueprint/UserWidget.h"
@@ -32,6 +33,11 @@ void AMultiBallPlayerController::SetupInputComponent()
     Super::SetupInputComponent();
 
     InputComponent->BindAction("PlaceItem", IE_Pressed, this, &AMultiBallPlayerController::HandlePlacementClick);
+
+    // Debug key bindings: 1=Shop, 2=Build, 3=Drop
+    InputComponent->BindKey(EKeys::One, IE_Pressed, this, &AMultiBallPlayerController::DebugEnterShop);
+    InputComponent->BindKey(EKeys::Two, IE_Pressed, this, &AMultiBallPlayerController::DebugEnterBuild);
+    InputComponent->BindKey(EKeys::Three, IE_Pressed, this, &AMultiBallPlayerController::DebugEnterDrop);
 }
 
 void AMultiBallPlayerController::SelectPlaceable(TSubclassOf<APlaceableActor> PlaceableClass)
@@ -81,4 +87,33 @@ void AMultiBallPlayerController::PurchasePlaceable_Implementation(TSubclassOf<AP
 bool AMultiBallPlayerController::PurchasePlaceable_Validate(TSubclassOf<APlaceableActor> PlaceableClass, FVector Location)
 {
     return true;
+}
+
+// --- Debug Key Bindings ---
+
+void AMultiBallPlayerController::DebugEnterShop()
+{
+    AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(GetWorld()->GetAuthGameMode());
+    if (GM)
+    {
+        GM->EnterShopPhase();
+    }
+}
+
+void AMultiBallPlayerController::DebugEnterBuild()
+{
+    AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(GetWorld()->GetAuthGameMode());
+    if (GM)
+    {
+        GM->EnterBuildPhase();
+    }
+}
+
+void AMultiBallPlayerController::DebugEnterDrop()
+{
+    AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(GetWorld()->GetAuthGameMode());
+    if (GM)
+    {
+        GM->EnterDropPhase();
+    }
 }

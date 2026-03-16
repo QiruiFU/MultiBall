@@ -4,6 +4,7 @@
 #include "PlaceableActor.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "UObject/ConstructorHelpers.h"
 
 ABoardActor::ABoardActor()
 {
@@ -11,14 +12,21 @@ ABoardActor::ABoardActor()
 
 	// Board bounds
 	BoardBounds = CreateDefaultSubobject<UBoxComponent>(TEXT("BoardBounds"));
-	BoardBounds->SetBoxExtent(FVector(500.0f, 500.0f, 800.0f));
+	BoardBounds->SetBoxExtent(FVector(500.0f, 50.0f, 800.0f));
 	BoardBounds->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	BoardBounds->SetCollisionResponseToAllChannels(ECR_Ignore);
 	SetRootComponent(BoardBounds);
 
-	// Visual mesh
+	// Visual mesh — flat board
 	BoardMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BoardMesh"));
 	BoardMesh->SetupAttachment(BoardBounds);
+	BoardMesh->SetRelativeScale3D(FVector(10.0f, 1.0f, 16.0f));
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("/Engine/BasicShapes/Cube"));
+	if (CubeMesh.Succeeded())
+	{
+		BoardMesh->SetStaticMesh(CubeMesh.Object);
+	}
 
 	MinPlacementDistance = 30.0f;
 }

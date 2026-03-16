@@ -5,6 +5,7 @@
 #include "ScoreSubsystem.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "UObject/ConstructorHelpers.h"
 
 ABallActor::ABallActor()
 {
@@ -18,10 +19,17 @@ ABallActor::ABallActor()
 	CollisionComponent->SetNotifyRigidBodyCollision(true);
 	SetRootComponent(CollisionComponent);
 
-	// Visual mesh
+	// Visual mesh — default sphere
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
 	MeshComponent->SetupAttachment(CollisionComponent);
 	MeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	MeshComponent->SetRelativeScale3D(FVector(0.2f));
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMesh(TEXT("/Engine/BasicShapes/Sphere"));
+	if (SphereMesh.Succeeded())
+	{
+		MeshComponent->SetStaticMesh(SphereMesh.Object);
+	}
 
 	// Scoring
 	AccumulatedChips = 0;

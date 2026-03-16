@@ -4,6 +4,7 @@
 #include "BallActor.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "UObject/ConstructorHelpers.h"
 
 APlaceableActor::APlaceableActor()
 {
@@ -15,9 +16,16 @@ APlaceableActor::APlaceableActor()
 	CollisionComponent->SetCollisionProfileName(TEXT("BlockAllDynamic"));
 	SetRootComponent(CollisionComponent);
 
-	// Visual mesh
+	// Visual mesh — default cylinder
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
 	MeshComponent->SetupAttachment(CollisionComponent);
+	MeshComponent->SetRelativeScale3D(FVector(0.3f, 0.3f, 0.5f));
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderMesh(TEXT("/Engine/BasicShapes/Cylinder"));
+	if (CylinderMesh.Succeeded())
+	{
+		MeshComponent->SetStaticMesh(CylinderMesh.Object);
+	}
 
 	// Defaults
 	Cost = 10;

@@ -4,6 +4,7 @@
 #include "BallActor.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
+#include "UObject/ConstructorHelpers.h"
 
 ABallEmitterActor::ABallEmitterActor()
 {
@@ -11,7 +12,17 @@ ABallEmitterActor::ABallEmitterActor()
 
 	EmitterMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EmitterMesh"));
 	EmitterMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	EmitterMesh->SetRelativeScale3D(FVector(0.5f, 2.0f, 0.3f));
 	SetRootComponent(EmitterMesh);
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(TEXT("/Engine/BasicShapes/Cube"));
+	if (CubeMesh.Succeeded())
+	{
+		EmitterMesh->SetStaticMesh(CubeMesh.Object);
+	}
+
+	// Default ball class — works out of the box
+	BallClass = ABallActor::StaticClass();
 
 	// Defaults
 	DropInterval = 1.5f;

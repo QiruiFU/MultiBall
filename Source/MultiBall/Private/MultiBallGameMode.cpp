@@ -7,6 +7,7 @@
 #include "ShopComponent.h"
 #include "ScoreSubsystem.h"
 #include "OpponentDataAsset.h"
+#include "Kismet/GameplayStatics.h"
 
 AMultiBallGameMode::AMultiBallGameMode()
 {
@@ -40,13 +41,37 @@ void AMultiBallGameMode::BeginPlay()
 		}
 	}
 
-	// Load first opponent
+	// Auto-find BallEmitterActor in the level if not manually set
+	if (!BallEmitter)
+	{
+		BallEmitter = Cast<ABallEmitterActor>(
+			UGameplayStatics::GetActorOfClass(GetWorld(), ABallEmitterActor::StaticClass()));
+		if (BallEmitter)
+		{
+			UE_LOG(LogTemp, Log, TEXT("GameMode: Auto-found BallEmitterActor in level."));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("GameMode: No BallEmitterActor found! Place one in the level."));
+		}
+	}
+
+	// Load first opponent (or set a default if no data asset)
 	if (OpponentRoster && OpponentRoster->Opponents.Num() > 0)
 	{
 		CurrentOpponent = OpponentRoster->Opponents[0];
-		UE_LOG(LogTemp, Log, TEXT("GameMode: First opponent: %s (Target: %lld)"),
-		       *CurrentOpponent.Name.ToString(), CurrentOpponent.TargetScore);
 	}
+	else
+	{
+		// Default opponent for testing
+		CurrentOpponent.Name = FText::FromString(TEXT("Test Opponent"));
+		CurrentOpponent.TargetScore = 50;
+		CurrentOpponent.Difficulty = 1;
+		UE_LOG(LogTemp, Log, TEXT("GameMode: No OpponentRoster set. Using default test opponent (Target: 50)."));
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("GameMode: Opponent: %s (Target: %lld)"),
+	       *CurrentOpponent.Name.ToString(), CurrentOpponent.TargetScore);
 
 	// Bind emitter callback
 	if (BallEmitter)
