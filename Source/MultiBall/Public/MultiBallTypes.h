@@ -15,7 +15,7 @@ enum class EGamePhase : uint8
 	Build		UMETA(DisplayName = "Build"),
 	Drop		UMETA(DisplayName = "Drop"),
 	Rewards		UMETA(DisplayName = "Rewards"),
-	GameOver	UMETA(DisplayName = "Game Over")
+	GameOver	UMETA(DisplayName = "Game Over"),
 };
 
 /** Types of placeable components. */
@@ -24,7 +24,7 @@ enum class EPlaceableType : uint8
 {
 	Peg			UMETA(DisplayName = "Peg"),
 	Bumper		UMETA(DisplayName = "Bumper"),
-	Rail		UMETA(DisplayName = "Rail")
+	Rail		UMETA(DisplayName = "Rail"),
 };
 
 /** Accumulated scoring data (Chips x Multiplier). */
