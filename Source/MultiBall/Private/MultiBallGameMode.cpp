@@ -7,12 +7,14 @@
 #include "ShopComponent.h"
 #include "ScoreSubsystem.h"
 #include "OpponentDataAsset.h"
+#include "BoardCameraPawn.h"
 #include "Kismet/GameplayStatics.h"
 
 AMultiBallGameMode::AMultiBallGameMode()
 {
 	PlayerStateClass = AMultiBallPlayerState::StaticClass();
 	PlayerControllerClass = AMultiBallPlayerController::StaticClass();
+	DefaultPawnClass = ABoardCameraPawn::StaticClass();
 
 	ShopComponent = CreateDefaultSubobject<UShopComponent>(TEXT("ShopComponent"));
 
