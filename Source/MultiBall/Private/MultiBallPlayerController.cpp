@@ -6,6 +6,7 @@
 #include "PlaceableActor.h"
 #include "Engine/World.h"
 #include "Blueprint/UserWidget.h"
+#include "PegActor.h"
 #include "GameFramework/Pawn.h"
 
 AMultiBallPlayerController::AMultiBallPlayerController()
@@ -52,10 +53,14 @@ void AMultiBallPlayerController::SetupInputComponent()
 void AMultiBallPlayerController::SelectPlaceable(TSubclassOf<APlaceableActor> PlaceableClass)
 {
     SelectedPlaceableClass = PlaceableClass;
+    //Log the name of the selected placeable
+	UE_LOG(LogTemp, Log, TEXT("Selected placeable: %s"), *GetNameSafe(PlaceableClass));
 }
 
 void AMultiBallPlayerController::HandlePlacementClick()
 {
+    UE_LOG(LogTemp, Log, TEXT("Trying to Place"));
+    SelectedPlaceableClass = APegActor::StaticClass();
     if (SelectedPlaceableClass)
     {
         FVector WorldLocation, WorldDirection;
@@ -75,8 +80,10 @@ void AMultiBallPlayerController::HandlePlacementClick()
 
 void AMultiBallPlayerController::PurchasePlaceable_Implementation(TSubclassOf<APlaceableActor> PlaceableClass, FVector Location)
 {
+    UE_LOG(LogTemp, Log, TEXT("This is called"));
     if (HasAuthority())
     {
+        UE_LOG(LogTemp, Log, TEXT("Trying to Place 2"));
         AMultiBallPlayerState* MBPlayerState = GetPlayerState<AMultiBallPlayerState>();
         if (MBPlayerState && PlaceableClass)
         {
