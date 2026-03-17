@@ -47,6 +47,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Game Loop")
 	int32 GetCurrentRound() const { return CurrentRound; }
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Game Loop")
+	int64 GetCurrentOpponentTargetScore() const { return CurrentOpponent.TargetScore; }
+
 	// --- Events ---
 
 	UPROPERTY(BlueprintAssignable, Category = "Game Loop")

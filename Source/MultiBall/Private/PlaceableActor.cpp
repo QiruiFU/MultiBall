@@ -75,5 +75,8 @@ void APlaceableActor::OnBallHit(ABallActor* Ball)
 		}
 	}
 
-	UE_LOG(LogTemp, Verbose, TEXT("Ball hit %s: +%d chips, x%.2f mult"), *GetName(), ChipValue, MultiplierValue);
+	FScoreData BallScore = Ball->GetScoreData();
+	UE_LOG(LogTemp, Log, TEXT("Ball hit %s: +%d chips, +%.2f mult → Ball total: %d chips x%.2f mult = %lld"),
+	       *GetName(), ChipValue, MultiplierValue,
+	       BallScore.Chips, BallScore.Multiplier, BallScore.GetTotalScore());
 }
