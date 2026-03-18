@@ -8,14 +8,13 @@
 #include "BuildInventoryWidget.generated.h"
 
 class APlaceableActor;
-class UVerticalBox;
+class UHorizontalBox;
 class UButton;
 class UTextBlock;
 
 /**
- * C++ base class for the Build-phase inventory sidebar.
- * Displays purchased items and lets the player select one for placement.
- * Designed to be subclassed in Blueprint for visual layout.
+ * Inventory bar displayed at the bottom of the screen.
+ * Shows purchased items during both Shop and Build phases.
  */
 UCLASS()
 class MULTIBALL_API UBuildInventoryWidget : public UUserWidget
@@ -25,21 +24,26 @@ class MULTIBALL_API UBuildInventoryWidget : public UUserWidget
 public:
 
 	/** Refresh the inventory display from the player's state. */
-	UFUNCTION(BlueprintCallable, Category = "Build")
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void RefreshInventory();
 
 	/** Called when the player clicks an item in the inventory. */
-	UFUNCTION(BlueprintCallable, Category = "Build")
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void OnItemSelected(TSubclassOf<APlaceableActor> PlaceableClass);
 
 protected:
 	virtual void NativeConstruct() override;
 
-	/** Container for dynamically-created item entries. Bind in Blueprint. */
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, OptionalWidget), Category = "Build")
-	UVerticalBox* InventoryContainer;
+	/** Horizontal container for inventory items. Bind in Blueprint. */
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, OptionalWidget), Category = "Inventory")
+	UHorizontalBox* InventoryContainer;
 
-	/** Class of the per-item entry widget. Set in Blueprint defaults. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Build")
-	TSubclassOf<UUserWidget> ItemEntryWidgetClass;
+private:
+	/** Maps buttons to their corresponding placeable class. */
+	UPROPERTY()
+	TMap<UButton*, TSubclassOf<APlaceableActor>> ButtonToClassMap;
+
+	/** Single click handler that identifies which button was pressed. */
+	UFUNCTION()
+	void HandleInventoryButtonClicked();
 };

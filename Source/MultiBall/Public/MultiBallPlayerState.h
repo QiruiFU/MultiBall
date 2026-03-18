@@ -7,10 +7,12 @@
 #include "MultiBallTypes.h"
 #include "MultiBallPlayerState.generated.h"
 
+class APlaceableActor;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChanged);
 
 /**
- * Replicated player state tracking coins, score, inventory, and round data.
+ * Replicated player state tracking coins, score, and round data.
  */
 UCLASS()
 class MULTIBALL_API AMultiBallPlayerState : public APlayerState
@@ -43,23 +45,23 @@ public:
 
 	// --- Inventory ---
 
-	/** Purchased but not yet placed items. */
+	/** Items the player has purchased but not yet placed. */
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Inventory")
 	TArray<FInventoryEntry> Inventory;
 
-	/** Broadcast whenever inventory changes. */
+	/** Broadcast when inventory changes. */
 	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	FOnInventoryChanged OnInventoryChanged;
 
-	/** Add one unit of a placeable to inventory. */
+	/** Add an item to the inventory. */
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void AddToInventory(TSubclassOf<APlaceableActor> PlaceableClass);
 
-	/** Remove one unit from inventory. Returns false if not found. */
+	/** Remove one item from the inventory. Returns false if not found. */
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	bool RemoveFromInventory(TSubclassOf<APlaceableActor> PlaceableClass);
 
-	/** Check how many of a placeable the player owns. */
+	/** Get the count of a specific item in the inventory. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Inventory")
 	int32 GetInventoryCount(TSubclassOf<APlaceableActor> PlaceableClass) const;
 };

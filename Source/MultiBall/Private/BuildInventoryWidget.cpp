@@ -4,11 +4,10 @@
 #include "MultiBallPlayerController.h"
 #include "MultiBallPlayerState.h"
 #include "PlaceableActor.h"
-#include "Components/VerticalBox.h"
-#include "Components/VerticalBoxSlot.h"
+#include "Components/HorizontalBox.h"
+#include "Components/HorizontalBoxSlot.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
-#include "Blueprint/WidgetTree.h"
 
 void UBuildInventoryWidget::NativeConstruct()
 {
@@ -36,23 +35,25 @@ void UBuildInventoryWidget::RefreshInventory()
 		return;
 	}
 
-	// Clear existing entries
+	// Clear existing
 	InventoryContainer->ClearChildren();
+	ButtonToClassMap.Empty();
 
-	// Get player state
 	APlayerController* PC = GetOwningPlayer();
-	if (!PC)
-	{
-		return;
-	}
+	if (!PC) return;
 
 	AMultiBallPlayerState* PS = PC->GetPlayerState<AMultiBallPlayerState>();
-	if (!PS)
+	if (!PS) return;
+
+	if (PS->Inventory.Num() == 0)
 	{
+		UTextBlock* EmptyLabel = NewObject<UTextBlock>(InventoryContainer);
+		EmptyLabel->SetText(FText::FromString(TEXT("Inventory Empty")));
+		EmptyLabel->SetColorAndOpacity(FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f)));
+		InventoryContainer->AddChildToHorizontalBox(EmptyLabel);
 		return;
 	}
 
-	// Create a button for each inventory entry
 	for (const FInventoryEntry& Entry : PS->Inventory)
 	{
 		if (!Entry.PlaceableClass || Entry.Count <= 0)
@@ -60,11 +61,9 @@ void UBuildInventoryWidget::RefreshInventory()
 			continue;
 		}
 
-		// Get the display name from the CDO
 		const APlaceableActor* CDO = Entry.PlaceableClass->GetDefaultObject<APlaceableActor>();
 		FString ItemName = CDO ? CDO->GetClass()->GetName() : TEXT("Unknown");
 
-		// Create a button with a text label
 		UButton* ItemButton = NewObject<UButton>(InventoryContainer);
 		UTextBlock* ItemLabel = NewObject<UTextBlock>(ItemButton);
 
@@ -73,14 +72,28 @@ void UBuildInventoryWidget::RefreshInventory()
 
 		ItemButton->AddChild(ItemLabel);
 
-		// Capture the class for the lambda
-		TSubclassOf<APlaceableActor> CapturedClass = Entry.PlaceableClass;
-		ItemButton->OnClicked.AddDynamic(this, &UBuildInventoryWidget::RefreshInventory); // Placeholder
+		// Store mapping and bind click
+		ButtonToClassMap.Add(ItemButton, Entry.PlaceableClass);
+		ItemButton->OnClicked.AddDynamic(this, &UBuildInventoryWidget::HandleInventoryButtonClicked);
 
-		UVerticalBoxSlot* BoxSlot = InventoryContainer->AddChildToVerticalBox(ItemButton);
+		UHorizontalBoxSlot* BoxSlot = InventoryContainer->AddChildToHorizontalBox(ItemButton);
 		if (BoxSlot)
 		{
 			BoxSlot->SetPadding(FMargin(4.0f));
+		}
+	}
+}
+
+void UBuildInventoryWidget::HandleInventoryButtonClicked()
+{
+	// Find which button was clicked by checking hover state
+	for (auto& Pair : ButtonToClassMap)
+	{
+		if (Pair.Key && Pair.Key->IsHovered())
+		{
+			UE_LOG(LogTemp, Log, TEXT("Inventory: Selected %s"), *GetNameSafe(Pair.Value));
+			OnItemSelected(Pair.Value);
+			return;
 		}
 	}
 }
@@ -91,6 +104,6 @@ void UBuildInventoryWidget::OnItemSelected(TSubclassOf<APlaceableActor> Placeabl
 	if (PC)
 	{
 		PC->SelectPlaceable(PlaceableClass);
-		UE_LOG(LogTemp, Log, TEXT("BuildInventoryWidget: Selected %s"), *GetNameSafe(PlaceableClass));
+		UE_LOG(LogTemp, Log, TEXT("BuildInventoryWidget: Selected %s for placement."), *GetNameSafe(PlaceableClass));
 	}
 }
