@@ -8,6 +8,8 @@
 #include "MultiBallTypes.h"
 #include "MultiBallPlayerController.generated.h"
 
+class UNotificationWidget;
+
 /**
  * Player controller handling shop, placement, and ghost preview.
  */
@@ -41,6 +43,12 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
     TSubclassOf<class UUserWidget> BuildWidgetClass;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+    TSubclassOf<UNotificationWidget> NotificationWidgetClass;
+
+    /** Show a large centered notification. */
+    void ShowNotification(const FString& Message, float Duration = 2.0f);
+
     UFUNCTION()
     void HandlePhaseChanged(EGamePhase NewPhase);
 
@@ -65,4 +73,7 @@ private:
 
     UPROPERTY()
     APlaceableActor* GhostPreviewActor;
+
+    UPROPERTY()
+    UNotificationWidget* NotificationWidgetInstance;
 };

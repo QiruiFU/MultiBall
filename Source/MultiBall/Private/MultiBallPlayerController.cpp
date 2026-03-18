@@ -10,6 +10,7 @@
 #include "GameFramework/Pawn.h"
 #include "Components/StaticMeshComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "NotificationWidget.h"
 
 AMultiBallPlayerController::AMultiBallPlayerController()
 {
@@ -17,6 +18,7 @@ AMultiBallPlayerController::AMultiBallPlayerController()
     bEnableClickEvents = true;
     BuildWidget = nullptr;
     GhostPreviewActor = nullptr;
+    NotificationWidgetInstance = nullptr;
     PrimaryActorTick.bCanEverTick = true;
 }
 
@@ -51,13 +53,23 @@ void AMultiBallPlayerController::BeginPlay()
         // Trigger immediately for the initial phase (game starts in Shop)
         HandlePhaseChanged(GM->GetCurrentPhase());
     }
+
+    // Create notification widget (stays in viewport, hidden until needed)
+    if (IsLocalController() && NotificationWidgetClass)
+    {
+        NotificationWidgetInstance = CreateWidget<UNotificationWidget>(this, NotificationWidgetClass);
+        if (NotificationWidgetInstance)
+        {
+            NotificationWidgetInstance->AddToViewport(100); // high Z-order so it's on top
+        }
+    }
 }
 
 void AMultiBallPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
 
-    InputComponent->BindAction("PlaceItem", IE_Pressed, this, &AMultiBallPlayerController::HandlePlacementClick);
+    InputComponent->BindKey(EKeys::LeftMouseButton, IE_Pressed, this, &AMultiBallPlayerController::HandlePlacementClick);
 
     // Debug key bindings: 1=Shop, 2=Build, 3=Drop
     InputComponent->BindKey(EKeys::One, IE_Pressed, this, &AMultiBallPlayerController::DebugEnterShop);
@@ -86,6 +98,10 @@ void AMultiBallPlayerController::SelectPlaceable(TSubclassOf<APlaceableActor> Pl
             SpawnGhostPreview();
         }
     }
+    else if (GM && PlaceableClass)
+    {
+        ShowNotification(TEXT("Items can only be placed during Build phase!"));
+    }
 }
 
 void AMultiBallPlayerController::HandlePlacementClick()
@@ -94,12 +110,7 @@ void AMultiBallPlayerController::HandlePlacementClick()
     AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(GetWorld()->GetAuthGameMode());
     if (!GM || GM->GetCurrentPhase() != EGamePhase::Build)
     {
-        if (GEngine)
-        {
-            GEngine->AddOnScreenDebugMessage(1, 2.0f, FColor::Yellow,
-                TEXT("Only allowed to place during Build phase!"),
-                true, FVector2D(3.0f, 3.0f));
-        }
+        ShowNotification(TEXT("Only allowed to place during Build phase!"));
         return;
     }
 
@@ -301,5 +312,13 @@ void AMultiBallPlayerController::UpdateGhostPreview()
     else
     {
         GhostPreviewActor->SetActorHiddenInGame(true);
+    }
+}
+
+void AMultiBallPlayerController::ShowNotification(const FString& Message, float Duration)
+{
+    if (NotificationWidgetInstance)
+    {
+        NotificationWidgetInstance->ShowMessage(Message, Duration);
     }
 }
