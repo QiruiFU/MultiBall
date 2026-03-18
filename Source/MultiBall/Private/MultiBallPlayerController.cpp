@@ -8,12 +8,16 @@
 #include "Blueprint/UserWidget.h"
 #include "PegActor.h"
 #include "GameFramework/Pawn.h"
+#include "Components/StaticMeshComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 AMultiBallPlayerController::AMultiBallPlayerController()
 {
     bShowMouseCursor = true;
     bEnableClickEvents = true;
     BuildWidget = nullptr;
+    GhostPreviewActor = nullptr;
+    PrimaryActorTick.bCanEverTick = true;
 }
 
 void AMultiBallPlayerController::BeginPlay()
@@ -61,11 +65,27 @@ void AMultiBallPlayerController::SetupInputComponent()
     InputComponent->BindKey(EKeys::Three, IE_Pressed, this, &AMultiBallPlayerController::DebugEnterDrop);
 }
 
+void AMultiBallPlayerController::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+    UpdateGhostPreview();
+}
+
 void AMultiBallPlayerController::SelectPlaceable(TSubclassOf<APlaceableActor> PlaceableClass)
 {
     SelectedPlaceableClass = PlaceableClass;
-    //Log the name of the selected placeable
-	UE_LOG(LogTemp, Log, TEXT("Selected placeable: %s"), *GetNameSafe(PlaceableClass));
+    UE_LOG(LogTemp, Log, TEXT("Selected placeable: %s"), *GetNameSafe(PlaceableClass));
+
+    // Refresh ghost if in Build phase
+    AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(GetWorld()->GetAuthGameMode());
+    if (GM && GM->GetCurrentPhase() == EGamePhase::Build)
+    {
+        DestroyGhostPreview();
+        if (SelectedPlaceableClass)
+        {
+            SpawnGhostPreview();
+        }
+    }
 }
 
 void AMultiBallPlayerController::HandlePlacementClick()
@@ -76,7 +96,9 @@ void AMultiBallPlayerController::HandlePlacementClick()
     {
         if (GEngine)
         {
-            GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, TEXT("Only allowed to place during Build phase!"));
+            GEngine->AddOnScreenDebugMessage(1, 2.0f, FColor::Yellow,
+                TEXT("Only allowed to place during Build phase!"),
+                true, FVector2D(3.0f, 3.0f));
         }
         return;
     }
@@ -105,6 +127,13 @@ void AMultiBallPlayerController::HandlePlacementClick()
         if (GetWorld()->LineTraceSingleByChannel(HitResult, WorldLocation, WorldLocation + (WorldDirection * 10000.0f), ECC_Visibility, Params))
         {
             PurchasePlaceable(SelectedPlaceableClass, HitResult.Location);
+
+            // If inventory is now empty for this class, remove ghost
+            if (PS->GetInventoryCount(SelectedPlaceableClass) <= 0)
+            {
+                DestroyGhostPreview();
+                SelectedPlaceableClass = nullptr;
+            }
         }
     }
 }
@@ -172,7 +201,6 @@ void AMultiBallPlayerController::HandlePhaseChanged(EGamePhase NewPhase)
     {
         UE_LOG(LogTemp, Log, TEXT("Phase %d - showing inventory widget."), (int32)NewPhase);
 
-        // Create and show inventory widget if not already showing
         if (IsLocalController() && BuildWidgetClass && !BuildWidget)
         {
             BuildWidget = CreateWidget<UUserWidget>(this, BuildWidgetClass);
@@ -181,14 +209,97 @@ void AMultiBallPlayerController::HandlePhaseChanged(EGamePhase NewPhase)
                 BuildWidget->AddToViewport();
             }
         }
+
+        // Spawn ghost if entering Build with a selection
+        if (NewPhase == EGamePhase::Build && SelectedPlaceableClass)
+        {
+            SpawnGhostPreview();
+        }
     }
     else
     {
-        // Other phases - remove the widget
+        // Leaving active phases - clean up
+        DestroyGhostPreview();
+
         if (BuildWidget)
         {
             BuildWidget->RemoveFromParent();
             BuildWidget = nullptr;
         }
+    }
+}
+
+// --- Ghost Preview ---
+
+void AMultiBallPlayerController::SpawnGhostPreview()
+{
+    DestroyGhostPreview();
+
+    if (!SelectedPlaceableClass) return;
+
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    GhostPreviewActor = GetWorld()->SpawnActor<APlaceableActor>(
+        SelectedPlaceableClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+
+    if (!GhostPreviewActor) return;
+
+    // Disable collision so it doesn't interfere
+    GhostPreviewActor->SetActorEnableCollision(false);
+    GhostPreviewActor->SetActorHiddenInGame(true); // hidden until first mouse hit
+
+    // Make translucent
+    TArray<UStaticMeshComponent*> Meshes;
+    GhostPreviewActor->GetComponents<UStaticMeshComponent>(Meshes);
+    for (UStaticMeshComponent* Mesh : Meshes)
+    {
+        if (Mesh)
+        {
+            for (int32 i = 0; i < Mesh->GetNumMaterials(); i++)
+            {
+                UMaterialInstanceDynamic* DynMat = Mesh->CreateAndSetMaterialInstanceDynamic(i);
+                if (DynMat)
+                {
+                    DynMat->SetScalarParameterValue(TEXT("Opacity"), 0.4f);
+                }
+            }
+            Mesh->SetRenderCustomDepth(true);
+        }
+    }
+}
+
+void AMultiBallPlayerController::DestroyGhostPreview()
+{
+    if (GhostPreviewActor)
+    {
+        GhostPreviewActor->Destroy();
+        GhostPreviewActor = nullptr;
+    }
+}
+
+void AMultiBallPlayerController::UpdateGhostPreview()
+{
+    if (!GhostPreviewActor) return;
+
+    FVector WorldLocation, WorldDirection;
+    if (!DeprojectMousePositionToWorld(WorldLocation, WorldDirection)) return;
+
+    FHitResult HitResult;
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(GetPawn());
+    Params.AddIgnoredActor(GhostPreviewActor);
+
+    bool bHit = GetWorld()->LineTraceSingleByChannel(
+        HitResult, WorldLocation, WorldLocation + (WorldDirection * 10000.0f),
+        ECC_Visibility, Params);
+
+    if (bHit)
+    {
+        GhostPreviewActor->SetActorLocation(HitResult.Location);
+        GhostPreviewActor->SetActorHiddenInGame(false);
+    }
+    else
+    {
+        GhostPreviewActor->SetActorHiddenInGame(true);
     }
 }

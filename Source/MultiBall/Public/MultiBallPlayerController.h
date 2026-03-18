@@ -9,7 +9,7 @@
 #include "MultiBallPlayerController.generated.h"
 
 /**
- * 
+ * Player controller handling shop, placement, and ghost preview.
  */
 UCLASS()
 class MULTIBALL_API AMultiBallPlayerController : public APlayerController
@@ -31,6 +31,7 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
+    virtual void Tick(float DeltaTime) override;
 
     void HandlePlacementClick();
 
@@ -40,7 +41,6 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
     TSubclassOf<class UUserWidget> BuildWidgetClass;
 
-    /** Called when game phase changes - shows/hides Build widget. */
     UFUNCTION()
     void HandlePhaseChanged(EGamePhase NewPhase);
 
@@ -51,4 +51,18 @@ private:
 
     UPROPERTY()
     UUserWidget* BuildWidget;
+
+    // --- Ghost Preview ---
+
+    /** Spawn a translucent ghost of the selected placeable. */
+    void SpawnGhostPreview();
+
+    /** Destroy the current ghost preview actor. */
+    void DestroyGhostPreview();
+
+    /** Update ghost position to follow mouse cursor each frame. */
+    void UpdateGhostPreview();
+
+    UPROPERTY()
+    APlaceableActor* GhostPreviewActor;
 };
