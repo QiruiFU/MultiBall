@@ -60,6 +60,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* MeshComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USphereComponent* PlacementBlockingRadius;
+
 	// --- Scoring Interface ---
 
 	/** Called when a ball hits this placeable. Override in subclasses for custom behavior. */

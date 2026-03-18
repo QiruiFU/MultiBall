@@ -26,7 +26,7 @@ public:
     void SelectPlaceable(TSubclassOf<APlaceableActor> PlaceableClass);
 
     UFUNCTION(Server, Reliable, WithValidation)
-    void PurchasePlaceable(TSubclassOf<APlaceableActor> PlaceableClass, FVector Location);
+    void PurchasePlaceable(TSubclassOf<APlaceableActor> PlaceableClass, FVector Location, FVector Offset);
 
     UPROPERTY(BlueprintReadWrite, Category = "Shop")
     TSubclassOf<APlaceableActor> SelectedPlaceableClass;

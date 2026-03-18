@@ -6,6 +6,11 @@
 
 ABumperActor::ABumperActor()
 {
+	FString matName = "/Game/RedMat.RedMat";
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> matAsset(*matName);
+
+	UMaterialInterface* mat = matAsset.Object;
+	MeshComponent->SetMaterial(0, mat);
 	PlaceableType = EPlaceableType::Bumper;
 	Cost = 25;
 	ChipValue = 2;
@@ -24,7 +29,7 @@ void ABumperActor::OnBallHit(ABallActor* Ball)
 {
 	// Apply base scoring
 	Super::OnBallHit(Ball);
-
+	
 	if (bIsBroken || !Ball)
 	{
 		return;

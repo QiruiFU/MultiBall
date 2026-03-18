@@ -40,7 +40,7 @@ ABallActor::ABallActor()
 	SettleTimeRequired = 2.0f;
 	SettleTimer = 0.0f;
 	bHasSettled = false;
-	KillZ = -500.0f;
+	KillZ = 1.0f;
 }
 
 void ABallActor::BeginPlay()

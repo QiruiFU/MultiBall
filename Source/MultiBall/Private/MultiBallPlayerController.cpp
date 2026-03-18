@@ -12,6 +12,7 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "NotificationWidget.h"
 #include "PhaseButtonWidget.h"
+#include "BoardActor.h"
 
 AMultiBallPlayerController::AMultiBallPlayerController()
 {
@@ -152,19 +153,23 @@ void AMultiBallPlayerController::HandlePlacementClick()
 
         if (GetWorld()->LineTraceSingleByChannel(HitResult, WorldLocation, WorldLocation + (WorldDirection * 10000.0f), ECC_Visibility, Params))
         {
-            PurchasePlaceable(SelectedPlaceableClass, HitResult.Location);
-
-            // If inventory is now empty for this class, remove ghost
-            if (PS->GetInventoryCount(SelectedPlaceableClass) <= 0)
+            if (Cast<ABoardActor>(HitResult.GetActor()))
             {
-                DestroyGhostPreview();
-                SelectedPlaceableClass = nullptr;
+                PurchasePlaceable(SelectedPlaceableClass, HitResult.Location, HitResult.Normal * 30);
+
+                // If inventory is now empty for this class, remove ghost
+                if (PS->GetInventoryCount(SelectedPlaceableClass) <= 0)
+                {
+                    DestroyGhostPreview();
+                    SelectedPlaceableClass = nullptr;
+                }
             }
+            
         }
     }
 }
 
-void AMultiBallPlayerController::PurchasePlaceable_Implementation(TSubclassOf<APlaceableActor> PlaceableClass, FVector Location)
+void AMultiBallPlayerController::PurchasePlaceable_Implementation(TSubclassOf<APlaceableActor> PlaceableClass, FVector Location, FVector Offset)
 {
     if (HasAuthority())
     {
@@ -182,12 +187,13 @@ void AMultiBallPlayerController::PurchasePlaceable_Implementation(TSubclassOf<AP
 
             FActorSpawnParameters SpawnParams;
             SpawnParams.Owner = this;
-            GetWorld()->SpawnActor<APlaceableActor>(PlaceableClass, Location, FRotator::ZeroRotator, SpawnParams);
+
+            GetWorld()->SpawnActor<APlaceableActor>(PlaceableClass, Location + Offset, FRotationMatrix::MakeFromZ(Offset.GetSafeNormal()).Rotator(), SpawnParams);
         }
     }
 }
 
-bool AMultiBallPlayerController::PurchasePlaceable_Validate(TSubclassOf<APlaceableActor> PlaceableClass, FVector Location)
+bool AMultiBallPlayerController::PurchasePlaceable_Validate(TSubclassOf<APlaceableActor> PlaceableClass, FVector Location, FVector Offset)
 {
     return true;
 }
@@ -325,9 +331,11 @@ void AMultiBallPlayerController::UpdateGhostPreview()
         HitResult, WorldLocation, WorldLocation + (WorldDirection * 10000.0f),
         ECC_Visibility, Params);
 
-    if (bHit)
+    if (bHit && Cast<ABoardActor>(HitResult.GetActor()))
     {
         GhostPreviewActor->SetActorLocation(HitResult.Location);
+        GhostPreviewActor->SetActorRotation(FRotationMatrix::MakeFromZ(HitResult.Normal).Rotator());
+        GhostPreviewActor->SetActorLocation(GhostPreviewActor->GetActorLocation() + GhostPreviewActor->GetActorUpVector() * 30);
         GhostPreviewActor->SetActorHiddenInGame(false);
     }
     else

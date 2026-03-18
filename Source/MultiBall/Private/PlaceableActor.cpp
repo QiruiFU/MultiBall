@@ -16,6 +16,13 @@ APlaceableActor::APlaceableActor()
 	CollisionComponent->SetCollisionProfileName(TEXT("BlockAllDynamic"));
 	SetRootComponent(CollisionComponent);
 
+	PlacementBlockingRadius = CreateDefaultSubobject<USphereComponent>(TEXT("PlacementBlockingRadius"));
+	PlacementBlockingRadius->InitSphereRadius(60.0f);
+	PlacementBlockingRadius->SetCollisionProfileName(TEXT("QueryOnly"));
+	PlacementBlockingRadius->SetCollisionResponseToAllChannels(ECR_Ignore);
+	PlacementBlockingRadius->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	PlacementBlockingRadius->SetupAttachment(CollisionComponent);
+
 	// Visual mesh — default cylinder
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
 	MeshComponent->SetupAttachment(CollisionComponent);
@@ -25,6 +32,7 @@ APlaceableActor::APlaceableActor()
 	if (CylinderMesh.Succeeded())
 	{
 		MeshComponent->SetStaticMesh(CylinderMesh.Object);
+
 	}
 
 	// Defaults
