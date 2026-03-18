@@ -9,6 +9,7 @@
 #include "MultiBallPlayerController.generated.h"
 
 class UNotificationWidget;
+class UPhaseButtonWidget;
 
 /**
  * Player controller handling shop, placement, and ghost preview.
@@ -49,6 +50,9 @@ protected:
     /** Show a large centered notification. */
     void ShowNotification(const FString& Message, float Duration = 2.0f);
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+    TSubclassOf<UPhaseButtonWidget> PhaseButtonWidgetClass;
+
     UFUNCTION()
     void HandlePhaseChanged(EGamePhase NewPhase);
 
@@ -76,4 +80,7 @@ private:
 
     UPROPERTY()
     UNotificationWidget* NotificationWidgetInstance;
+
+    UPROPERTY()
+    UPhaseButtonWidget* PhaseButtonWidgetInstance;
 };

@@ -11,6 +11,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "NotificationWidget.h"
+#include "PhaseButtonWidget.h"
 
 AMultiBallPlayerController::AMultiBallPlayerController()
 {
@@ -19,6 +20,7 @@ AMultiBallPlayerController::AMultiBallPlayerController()
     BuildWidget = nullptr;
     GhostPreviewActor = nullptr;
     NotificationWidgetInstance = nullptr;
+    PhaseButtonWidgetInstance = nullptr;
     PrimaryActorTick.bCanEverTick = true;
 }
 
@@ -49,9 +51,6 @@ void AMultiBallPlayerController::BeginPlay()
     if (GM)
     {
         GM->OnPhaseChanged.AddDynamic(this, &AMultiBallPlayerController::HandlePhaseChanged);
-
-        // Trigger immediately for the initial phase (game starts in Shop)
-        HandlePhaseChanged(GM->GetCurrentPhase());
     }
 
     // Create notification widget (stays in viewport, hidden until needed)
@@ -60,8 +59,24 @@ void AMultiBallPlayerController::BeginPlay()
         NotificationWidgetInstance = CreateWidget<UNotificationWidget>(this, NotificationWidgetClass);
         if (NotificationWidgetInstance)
         {
-            NotificationWidgetInstance->AddToViewport(100); // high Z-order so it's on top
+            NotificationWidgetInstance->AddToViewport(100);
         }
+    }
+
+    // Create phase transition buttons
+    if (IsLocalController() && PhaseButtonWidgetClass)
+    {
+        PhaseButtonWidgetInstance = CreateWidget<UPhaseButtonWidget>(this, PhaseButtonWidgetClass);
+        if (PhaseButtonWidgetInstance)
+        {
+            PhaseButtonWidgetInstance->AddToViewport(50);
+        }
+    }
+
+    // Trigger initial phase AFTER all widgets are created
+    if (GM)
+    {
+        HandlePhaseChanged(GM->GetCurrentPhase());
     }
 }
 
@@ -208,6 +223,12 @@ void AMultiBallPlayerController::DebugEnterDrop()
 
 void AMultiBallPlayerController::HandlePhaseChanged(EGamePhase NewPhase)
 {
+    // Update phase button visibility
+    if (PhaseButtonWidgetInstance)
+    {
+        PhaseButtonWidgetInstance->SetPhase(NewPhase);
+    }
+
     if (NewPhase == EGamePhase::Shop || NewPhase == EGamePhase::Build)
     {
         UE_LOG(LogTemp, Log, TEXT("Phase %d - showing inventory widget."), (int32)NewPhase);
