@@ -57,6 +57,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ball")
 	float SettleTimeRequired;
 
+	/** Z height below which the ball is killed. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ball")
+	float KillZ;
+
 protected:
 	virtual void BeginPlay() override;
 

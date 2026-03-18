@@ -84,6 +84,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Economy")
 	int32 StartingCoins;
 
+	/** Maximum time for the Drop phase before auto-transitioning to Rewards. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Loop")
+	float DropPhaseDuration;
+
 	// --- Shop ---
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Shop")
@@ -99,4 +103,5 @@ private:
 	EGamePhase CurrentPhase;
 	int32 CurrentRound;
 	FOpponentData CurrentOpponent;
+	FTimerHandle DropPhaseTimerHandle;
 };

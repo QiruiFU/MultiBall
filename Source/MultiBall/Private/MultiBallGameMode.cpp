@@ -24,6 +24,7 @@ AMultiBallGameMode::AMultiBallGameMode()
 	MaxRounds = 10;
 	WinRewardCoins = 50;
 	StartingCoins = 100;
+	DropPhaseDuration = 15.0f;
 }
 
 void AMultiBallGameMode::BeginPlay()
@@ -137,6 +138,11 @@ void AMultiBallGameMode::EnterDropPhase()
 		BallEmitter->StartDropSequence(BallEmitter->BallsPerRound);
 	}
 
+	// Start Drop phase timeout timer
+	GetWorld()->GetTimerManager().ClearTimer(DropPhaseTimerHandle);
+	GetWorld()->GetTimerManager().SetTimer(DropPhaseTimerHandle, this,
+		&AMultiBallGameMode::OnAllBallsFinished, DropPhaseDuration, false);
+
 	OnPhaseChanged.Broadcast(CurrentPhase);
 }
 
@@ -199,7 +205,10 @@ void AMultiBallGameMode::OnAllBallsFinished()
 {
 	if (CurrentPhase == EGamePhase::Drop)
 	{
-		UE_LOG(LogTemp, Log, TEXT("GameMode: All balls settled. Transitioning to Rewards."));
+		// Clear timer to prevent double-transition
+		GetWorld()->GetTimerManager().ClearTimer(DropPhaseTimerHandle);
+
+		UE_LOG(LogTemp, Log, TEXT("GameMode: All balls settled / timeout. Transitioning to Rewards."));
 		EnterRewardsPhase();
 	}
 }

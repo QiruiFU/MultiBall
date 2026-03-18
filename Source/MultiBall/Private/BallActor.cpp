@@ -40,6 +40,7 @@ ABallActor::ABallActor()
 	SettleTimeRequired = 2.0f;
 	SettleTimer = 0.0f;
 	bHasSettled = false;
+	KillZ = -500.0f;
 }
 
 void ABallActor::BeginPlay()
@@ -56,6 +57,14 @@ void ABallActor::Tick(float DeltaTime)
 
 	if (bHasSettled)
 	{
+		return;
+	}
+
+	// Kill ball if it falls below the kill height
+	if (GetActorLocation().Z < KillZ)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Ball %s fell below KillZ (%.0f). Destroying."), *GetName(), KillZ);
+		SettleBall();
 		return;
 	}
 
