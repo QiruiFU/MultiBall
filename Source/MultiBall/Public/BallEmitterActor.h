@@ -74,6 +74,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 private:
+	UFUNCTION()
 	void OnBallDestroyed(AActor* DestroyedActor);
 
 	FVector OriginLocation;

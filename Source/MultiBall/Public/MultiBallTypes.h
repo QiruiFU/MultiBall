@@ -68,6 +68,19 @@ struct FShopItem
 	FText Description;
 };
 
+/** A single inventory entry: a placeable class and how many the player owns. */
+USTRUCT(BlueprintType)
+struct FInventoryEntry
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	TSubclassOf<APlaceableActor> PlaceableClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	int32 Count = 0;
+};
+
 /** Data describing a preset opponent. */
 USTRUCT(BlueprintType)
 struct FOpponentData

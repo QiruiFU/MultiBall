@@ -10,6 +10,7 @@
 class ABallEmitterActor;
 class UShopComponent;
 class UOpponentDataAsset;
+class ABoardActor;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPhaseChanged, EGamePhase, NewPhase);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRoundComplete, int32, Round, bool, bPlayerWon);
@@ -67,6 +68,10 @@ public:
 	/** Opponent data asset containing the roster. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Loop")
 	UOpponentDataAsset* OpponentRoster;
+
+	/** Reference to the board actor in the level. Auto-found if not set. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Loop")
+	ABoardActor* BoardActor;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Loop")
 	int32 MaxRounds;

@@ -65,6 +65,7 @@ bool UShopComponent::TryPurchase(AMultiBallPlayerState* PlayerState, const FShop
 	}
 
 	PlayerState->PlayerCoins -= Item.Cost;
+	PlayerState->AddToInventory(Item.PlaceableClass);
 	UE_LOG(LogTemp, Log, TEXT("ShopComponent: Purchased %s for %d coins. Remaining: %d"),
 	       *Item.DisplayName.ToString(), Item.Cost, PlayerState->PlayerCoins);
 	return true;

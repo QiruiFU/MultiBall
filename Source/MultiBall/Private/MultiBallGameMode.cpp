@@ -7,6 +7,7 @@
 #include "ShopComponent.h"
 #include "ScoreSubsystem.h"
 #include "OpponentDataAsset.h"
+#include "BoardActor.h"
 #include "BoardCameraPawn.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -55,6 +56,21 @@ void AMultiBallGameMode::BeginPlay()
 		else
 		{
 			UE_LOG(LogTemp, Warning, TEXT("GameMode: No BallEmitterActor found! Place one in the level."));
+		}
+	}
+
+	// Auto-find BoardActor in the level if not manually set
+	if (!BoardActor)
+	{
+		BoardActor = Cast<ABoardActor>(
+			UGameplayStatics::GetActorOfClass(GetWorld(), ABoardActor::StaticClass()));
+		if (BoardActor)
+		{
+			UE_LOG(LogTemp, Log, TEXT("GameMode: Auto-found BoardActor in level."));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("GameMode: No BoardActor found! Place one in the level."));
 		}
 	}
 
