@@ -12,7 +12,6 @@ UENUM(BlueprintType)
 enum class EGamePhase : uint8
 {
 	Shop		UMETA(DisplayName = "Shop"),
-	Build		UMETA(DisplayName = "Build"),
 	Drop		UMETA(DisplayName = "Drop"),
 	Rewards		UMETA(DisplayName = "Rewards"),
 	GameOver	UMETA(DisplayName = "Game Over"),

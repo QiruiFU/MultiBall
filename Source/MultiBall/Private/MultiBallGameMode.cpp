@@ -116,13 +116,6 @@ void AMultiBallGameMode::EnterShopPhase()
 	OnPhaseChanged.Broadcast(CurrentPhase);
 }
 
-void AMultiBallGameMode::EnterBuildPhase()
-{
-	CurrentPhase = EGamePhase::Build;
-	UE_LOG(LogTemp, Log, TEXT("GameMode: === BUILD PHASE ==="));
-	OnPhaseChanged.Broadcast(CurrentPhase);
-}
-
 void AMultiBallGameMode::EnterDropPhase()
 {
 	CurrentPhase = EGamePhase::Drop;

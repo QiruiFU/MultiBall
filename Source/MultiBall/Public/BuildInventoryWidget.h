@@ -14,7 +14,7 @@ class UTextBlock;
 
 /**
  * Inventory bar displayed at the bottom of the screen.
- * Shows purchased items during both Shop and Build phases.
+ * Shows purchased items during the Shop phase.
  */
 UCLASS()
 class MULTIBALL_API UBuildInventoryWidget : public UUserWidget

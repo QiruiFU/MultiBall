@@ -17,7 +17,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPhaseChanged, EGamePhase, NewPhas
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRoundComplete, int32, Round, bool, bPlayerWon);
 
 /**
- * Central orchestrator for the Shop -> Build -> Drop -> Rewards game loop.
+ * Central orchestrator for the Shop -> Drop -> Rewards game loop.
  */
 UCLASS()
 class MULTIBALL_API AMultiBallGameMode : public AGameModeBase
@@ -31,9 +31,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Game Loop")
 	void EnterShopPhase();
-
-	UFUNCTION(BlueprintCallable, Category = "Game Loop")
-	void EnterBuildPhase();
 
 	UFUNCTION(BlueprintCallable, Category = "Game Loop")
 	void EnterDropPhase();

@@ -11,8 +11,7 @@ class UButton;
 
 /**
  * Widget with phase transition buttons. Visibility is managed per-phase.
- * - StartBuildButton: visible in Shop phase
- * - StartDropButton: visible in Build phase
+ * - StartDropButton: visible in Shop phase
  * - EnterShopButton: visible in Rewards phase
  */
 UCLASS()
@@ -28,7 +27,8 @@ public:
 protected:
 	virtual void NativeConstruct() override;
 
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category = "Phase")
+	/** Deprecated — kept as optional binding so existing Blueprints don't break. */
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional), Category = "Phase")
 	UButton* StartBuildButton;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category = "Phase")
@@ -38,9 +38,6 @@ protected:
 	UButton* EnterShopButton;
 
 private:
-	UFUNCTION()
-	void OnStartBuildClicked();
-
 	UFUNCTION()
 	void OnStartDropClicked();
 

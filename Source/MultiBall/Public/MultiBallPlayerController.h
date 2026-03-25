@@ -62,7 +62,6 @@ protected:
 
 private:
     void DebugEnterShop();
-    void DebugEnterBuild();
     void DebugEnterDrop();
 
     UPROPERTY()

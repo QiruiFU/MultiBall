@@ -101,10 +101,9 @@ void AMultiBallPlayerController::SetupInputComponent()
 
     InputComponent->BindKey(EKeys::LeftMouseButton, IE_Pressed, this, &AMultiBallPlayerController::HandlePlacementClick);
 
-    // Debug key bindings: 1=Shop, 2=Build, 3=Drop
+    // Debug key bindings: 1=Shop, 2=Drop
     InputComponent->BindKey(EKeys::One, IE_Pressed, this, &AMultiBallPlayerController::DebugEnterShop);
-    InputComponent->BindKey(EKeys::Two, IE_Pressed, this, &AMultiBallPlayerController::DebugEnterBuild);
-    InputComponent->BindKey(EKeys::Three, IE_Pressed, this, &AMultiBallPlayerController::DebugEnterDrop);
+    InputComponent->BindKey(EKeys::Two, IE_Pressed, this, &AMultiBallPlayerController::DebugEnterDrop);
 }
 
 void AMultiBallPlayerController::Tick(float DeltaTime)
@@ -118,9 +117,9 @@ void AMultiBallPlayerController::SelectPlaceable(TSubclassOf<APlaceableActor> Pl
     SelectedPlaceableClass = PlaceableClass;
     UE_LOG(LogTemp, Log, TEXT("Selected placeable: %s"), *GetNameSafe(PlaceableClass));
 
-    // Refresh ghost if in Build phase
+    // Refresh ghost if in Shop phase
     AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(GetWorld()->GetAuthGameMode());
-    if (GM && GM->GetCurrentPhase() == EGamePhase::Build)
+    if (GM && GM->GetCurrentPhase() == EGamePhase::Shop)
     {
         DestroyGhostPreview();
         if (SelectedPlaceableClass)
@@ -130,17 +129,17 @@ void AMultiBallPlayerController::SelectPlaceable(TSubclassOf<APlaceableActor> Pl
     }
     else if (GM && PlaceableClass)
     {
-        ShowNotification(TEXT("Items can only be placed during Build phase!"));
+        ShowNotification(TEXT("Items can only be placed during Shop phase!"));
     }
 }
 
 void AMultiBallPlayerController::HandlePlacementClick()
 {
-    // Only allow placement during Build phase
+    // Only allow placement during Shop phase
     AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(GetWorld()->GetAuthGameMode());
-    if (!GM || GM->GetCurrentPhase() != EGamePhase::Build)
+    if (!GM || GM->GetCurrentPhase() != EGamePhase::Shop)
     {
-        ShowNotification(TEXT("Only allowed to place during Build phase!"));
+        ShowNotification(TEXT("Only allowed to place during Shop phase!"));
         return;
     }
 
@@ -190,7 +189,7 @@ void AMultiBallPlayerController::PurchasePlaceable_Implementation(TSubclassOf<AP
         AMultiBallPlayerState* MBPlayerState = GetPlayerState<AMultiBallPlayerState>();
         if (MBPlayerState && PlaceableClass)
         {
-            // Build phase: consume from inventory (items were pre-purchased in Shop)
+            // Shop phase: consume from inventory
             if (MBPlayerState->GetInventoryCount(PlaceableClass) <= 0)
             {
                 UE_LOG(LogTemp, Log, TEXT("Server: No inventory for %s."), *GetNameSafe(PlaceableClass));
@@ -223,14 +222,6 @@ void AMultiBallPlayerController::DebugEnterShop()
     }
 }
 
-void AMultiBallPlayerController::DebugEnterBuild()
-{
-    AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(GetWorld()->GetAuthGameMode());
-    if (GM)
-    {
-        GM->EnterBuildPhase();
-    }
-}
 
 void AMultiBallPlayerController::DebugEnterDrop()
 {
@@ -249,7 +240,7 @@ void AMultiBallPlayerController::HandlePhaseChanged(EGamePhase NewPhase)
         PhaseButtonWidgetInstance->SetPhase(NewPhase);
     }
 
-    if (NewPhase == EGamePhase::Shop || NewPhase == EGamePhase::Build)
+    if (NewPhase == EGamePhase::Shop)
     {
         UE_LOG(LogTemp, Log, TEXT("Phase %d - showing inventory widget."), (int32)NewPhase);
 
@@ -262,8 +253,8 @@ void AMultiBallPlayerController::HandlePhaseChanged(EGamePhase NewPhase)
             }
         }
 
-        // Spawn ghost if entering Build with a selection
-        if (NewPhase == EGamePhase::Build && SelectedPlaceableClass)
+        // Spawn ghost if entering Shop with a selection
+        if (SelectedPlaceableClass)
         {
             SpawnGhostPreview();
         }
