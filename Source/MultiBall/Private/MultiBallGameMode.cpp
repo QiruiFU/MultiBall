@@ -26,6 +26,10 @@ AMultiBallGameMode::AMultiBallGameMode()
 	WinRewardCoins = 50;
 	StartingCoins = 100;
 	DropPhaseDuration = 15.0f;
+	
+	BaseTargetScore = 50;
+	TargetScoreGrowthRate = 1.5f;
+	MinimumScoreIncrement = 25;
 }
 
 void AMultiBallGameMode::BeginPlay()
@@ -84,10 +88,10 @@ void AMultiBallGameMode::BeginPlay()
 	else
 	{
 		// Default opponent for testing
-		CurrentOpponent.Name = FText::FromString(TEXT("Test Opponent"));
-		CurrentOpponent.TargetScore = 50;
+		CurrentOpponent.Name = FText::FromString(TEXT("Level 1 Opponent"));
+		CurrentOpponent.TargetScore = BaseTargetScore;
 		CurrentOpponent.Difficulty = 1;
-		UE_LOG(LogTemp, Log, TEXT("GameMode: No OpponentRoster set. Using default test opponent (Target: 50)."));
+		UE_LOG(LogTemp, Log, TEXT("GameMode: No OpponentRoster set. Using dynamic target score: %lld"), BaseTargetScore);
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("GameMode: Opponent: %s (Target: %lld)"),
@@ -213,6 +217,13 @@ void AMultiBallGameMode::EnterRewardsPhase()
 		if (OpponentRoster && CurrentRound <= OpponentRoster->Opponents.Num())
 		{
 			CurrentOpponent = OpponentRoster->Opponents[CurrentRound - 1];
+		}
+		else
+		{
+			// Dynamically increase target score for endless rounds or missing roster
+			CurrentOpponent.Name = FText::FromString(FString::Printf(TEXT("Level %d Opponent"), CurrentRound));
+			CurrentOpponent.TargetScore = FMath::Max(static_cast<int64>(CurrentOpponent.TargetScore * TargetScoreGrowthRate), CurrentOpponent.TargetScore + MinimumScoreIncrement);
+			CurrentOpponent.Difficulty += 1;
 		}
 
 		OnPhaseChanged.Broadcast(CurrentPhase);

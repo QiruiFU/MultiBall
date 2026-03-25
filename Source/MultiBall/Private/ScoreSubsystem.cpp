@@ -46,9 +46,13 @@ void UScoreSubsystem::ResetRoundScore()
 
 bool UScoreSubsystem::DidPlayerWin(int64 OpponentScore) const
 {
-	// Apply ScoreDoubler skill to final comparison
+	return GetFinalCalculatedScore() > OpponentScore;
+}
+
+int64 UScoreSubsystem::GetFinalCalculatedScore() const
+{
+	// Apply ScoreDoubler skill to final calculation
 	USpecialSkillSubsystem* SkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
 	float SkillMult = SkillSys ? SkillSys->GetScoreMultiplier() : 1.0f;
-	int64 FinalScore = static_cast<int64>(RoundScore.GetTotalScore() * SkillMult);
-	return FinalScore > OpponentScore;
+	return static_cast<int64>(RoundScore.GetTotalScore() * SkillMult);
 }

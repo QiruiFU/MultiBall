@@ -35,6 +35,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Score")
 	bool DidPlayerWin(int64 OpponentScore) const;
 
+	/** Get the actual final score including all end-of-round multiplier skills. */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Score")
+	int64 GetFinalCalculatedScore() const;
+
 	/** Broadcast whenever the round score changes. */
 	UPROPERTY(BlueprintAssignable, Category = "Score")
 	FOnRoundScoreUpdated OnRoundScoreUpdated;

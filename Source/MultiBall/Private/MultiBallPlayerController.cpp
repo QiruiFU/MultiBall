@@ -17,6 +17,8 @@
 #include "SpecialSkillSubsystem.h"
 #include "BoardActor.h"
 #include "RemainingBallsWidget.h"
+#include "GameOverWidget.h"
+#include "ScoreSubsystem.h"
 #include "BallEmitterActor.h"
 
 AMultiBallPlayerController::AMultiBallPlayerController()
@@ -29,6 +31,7 @@ AMultiBallPlayerController::AMultiBallPlayerController()
     PhaseButtonWidgetInstance = nullptr;
     SpecialSkillWidgetInstance = nullptr;
     RemainingBallsWidgetInstance = nullptr;
+    GameOverWidgetInstance = nullptr;
     PrimaryActorTick.bCanEverTick = true;
 }
 
@@ -342,6 +345,24 @@ void AMultiBallPlayerController::HandlePhaseChanged(EGamePhase NewPhase)
         {
             RemainingBallsWidgetInstance->RemoveFromParent();
             RemainingBallsWidgetInstance = nullptr;
+        }
+    }
+
+    if (NewPhase == EGamePhase::GameOver)
+    {
+        if (IsLocalController() && !GameOverWidgetInstance)
+        {
+            GameOverWidgetInstance = CreateWidget<UGameOverWidget>(this, UGameOverWidget::StaticClass());
+            if (GameOverWidgetInstance)
+            {
+                UScoreSubsystem* ScoreSys = GetWorld()->GetSubsystem<UScoreSubsystem>();
+                AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(GetWorld()->GetAuthGameMode());
+                if (ScoreSys && GM)
+                {
+                    GameOverWidgetInstance->SetupScoreDisplay(ScoreSys->GetFinalCalculatedScore(), GM->GetCurrentOpponentTargetScore());
+                }
+                GameOverWidgetInstance->AddToViewport(300);
+            }
         }
     }
 }

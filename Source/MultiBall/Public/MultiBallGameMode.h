@@ -85,6 +85,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Loop")
 	int32 MaxRounds;
 
+	/** Base target score for round 1 when no Roster is used. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Loop")
+	int64 BaseTargetScore = 50;
+
+	/** Scaling multiplier for the target score each round (e.g., 1.5x). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Loop")
+	float TargetScoreGrowthRate = 1.5f;
+
+	/** Minimum flat increment to the target score each round to ensure continuous growth. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Loop")
+	int64 MinimumScoreIncrement = 25;
+
 	/** Coins awarded for winning a round. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Economy")
 	int32 WinRewardCoins;

@@ -14,6 +14,7 @@
 class UNotificationWidget;
 class UPhaseButtonWidget;
 class USpecialSkillWidget;
+class UGameOverWidget;
 
 /**
  * Player controller handling shop, placement, and ghost preview.
@@ -98,6 +99,9 @@ private:
 
     UPROPERTY()
     class URemainingBallsWidget* RemainingBallsWidgetInstance;
+
+    UPROPERTY()
+    class UGameOverWidget* GameOverWidgetInstance;
 
     UPROPERTY()
     UUserWidget* FloatingScoreWidgetInstance;
