@@ -49,7 +49,7 @@ protected:
     TSubclassOf<UNotificationWidget> NotificationWidgetClass;
 
     /** Show a large centered notification. */
-    void ShowNotification(const FString& Message, float Duration = 2.0f);
+    void ShowNotification(const FString& Message, float Duration = 2.0f, FLinearColor Color = FLinearColor::White);
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
     TSubclassOf<UPhaseButtonWidget> PhaseButtonWidgetClass;
@@ -63,6 +63,7 @@ protected:
 private:
     void DebugEnterShop();
     void DebugEnterDrop();
+    void DebugCheatWin();
 
     UPROPERTY()
     UUserWidget* BuildWidget;

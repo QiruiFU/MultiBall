@@ -10,12 +10,12 @@ void UNotificationWidget::NativeConstruct()
 	SetVisibility(ESlateVisibility::Hidden);
 }
 
-void UNotificationWidget::ShowMessage(const FString& Message, float Duration)
+void UNotificationWidget::ShowMessage(const FString& Message, float Duration, FLinearColor Color)
 {
-	if (MessageText)
-	{
-		MessageText->SetText(FText::FromString(Message));
-	}
+	if (!MessageText) return;
+
+	MessageText->SetText(FText::FromString(Message));
+	MessageText->SetColorAndOpacity(FSlateColor(Color));
 
 	SetVisibility(ESlateVisibility::HitTestInvisible);
 

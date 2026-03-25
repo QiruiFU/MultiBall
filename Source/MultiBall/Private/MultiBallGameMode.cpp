@@ -187,6 +187,21 @@ void AMultiBallGameMode::EnterRewardsPhase()
 	OnRoundComplete.Broadcast(CurrentRound, bPlayerWon);
 
 	CurrentRound++;
+
+	// Sync PlayerState round numbers
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		APlayerController* PC = It->Get();
+		if (PC)
+		{
+			AMultiBallPlayerState* PS = PC->GetPlayerState<AMultiBallPlayerState>();
+			if (PS)
+			{
+				PS->CurrentRound = CurrentRound;
+			}
+		}
+	}
+
 	if (!bPlayerWon || CurrentRound > MaxRounds)
 	{
 		CurrentPhase = EGamePhase::GameOver;
@@ -235,4 +250,31 @@ void AMultiBallGameMode::OnAllBallsFinished()
 		UE_LOG(LogTemp, Log, TEXT("GameMode: All balls settled / timeout. Transitioning to Rewards."));
 		EnterRewardsPhase();
 	}
+}
+
+void AMultiBallGameMode::CheatWinRound()
+{
+	if (CurrentPhase != EGamePhase::Drop)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("GameMode: CheatWinRound only works during Drop phase."));
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("GameMode: !!! CHEAT — Instant Win !!!"));
+
+	// Set score well above the opponent target to guarantee a win
+	UScoreSubsystem* ScoreSys = GetWorld()->GetSubsystem<UScoreSubsystem>();
+	if (ScoreSys)
+	{
+		ScoreSys->AddBallScore(CurrentOpponent.TargetScore + 1, 1.0f);
+	}
+
+	// Stop balls and clear timer
+	if (BallEmitter)
+	{
+		BallEmitter->StopDropSequence();
+	}
+	GetWorld()->GetTimerManager().ClearTimer(DropPhaseTimerHandle);
+
+	EnterRewardsPhase();
 }

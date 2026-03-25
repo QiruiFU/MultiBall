@@ -3,6 +3,7 @@
 #include "ShopWidget.h"
 #include "Components/Button.h"
 #include "Components/Border.h"
+#include "Components/TextBlock.h"
 #include "MultiBallPlayerState.h"
 #include "MultiBallGameMode.h"
 #include "PegActor.h"
@@ -34,6 +35,8 @@ void UShopWidget::NativeConstruct()
 		// Apply initial state
 		HandlePhaseChanged(GM->GetCurrentPhase());
 	}
+
+	UpdateRoundText();
 }
 
 void UShopWidget::NativeDestruct()
@@ -114,4 +117,18 @@ void UShopWidget::HandlePhaseChanged(EGamePhase NewPhase)
 
 	UE_LOG(LogTemp, Log, TEXT("ShopWidget: Phase %d -> Shop UI %s"),
 	       (int32)NewPhase, Vis == ESlateVisibility::Visible ? TEXT("SHOWN") : TEXT("HIDDEN"));
+
+	UpdateRoundText();
+}
+
+void UShopWidget::UpdateRoundText()
+{
+	if (!RoundText) return;
+
+	AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	if (GM)
+	{
+		RoundText->SetText(FText::FromString(
+			FString::Printf(TEXT("Round %d / %d"), GM->GetCurrentRound(), GM->MaxRounds)));
+	}
 }

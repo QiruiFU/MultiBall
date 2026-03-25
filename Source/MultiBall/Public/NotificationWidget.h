@@ -20,7 +20,7 @@ public:
 
 	/** Show a message for the given duration, then auto-remove. */
 	UFUNCTION(BlueprintCallable, Category = "UI")
-	void ShowMessage(const FString& Message, float Duration = 2.0f);
+	void ShowMessage(const FString& Message, float Duration = 2.0f, FLinearColor Color = FLinearColor::White);
 
 protected:
 	virtual void NativeConstruct() override;

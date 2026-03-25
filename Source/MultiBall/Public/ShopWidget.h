@@ -10,6 +10,7 @@
 
 class UButton;
 class UBorder;
+class UTextBlock;
 
 /**
  * C++ base class for the Shop UI. Reparent WBP_ShopUI to this class
@@ -42,6 +43,10 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UBorder* CoinsBorder;
 
+	/** Text showing the current round number. */
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UTextBlock* RoundText;
+
 private:
 	UFUNCTION()
 	void OnPegClicked();
@@ -54,4 +59,7 @@ private:
 	/** Called when the game phase changes — shows/hides shop UI. */
 	UFUNCTION()
 	void HandlePhaseChanged(EGamePhase NewPhase);
+
+	/** Update the round text from the GameMode. */
+	void UpdateRoundText();
 };

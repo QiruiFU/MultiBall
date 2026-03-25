@@ -101,9 +101,10 @@ void AMultiBallPlayerController::SetupInputComponent()
 
     InputComponent->BindKey(EKeys::LeftMouseButton, IE_Pressed, this, &AMultiBallPlayerController::HandlePlacementClick);
 
-    // Debug key bindings: 1=Shop, 2=Drop
+    // Debug key bindings: 1=Shop, 2=Drop, P=Cheat Win
     InputComponent->BindKey(EKeys::One, IE_Pressed, this, &AMultiBallPlayerController::DebugEnterShop);
     InputComponent->BindKey(EKeys::Two, IE_Pressed, this, &AMultiBallPlayerController::DebugEnterDrop);
+    InputComponent->BindKey(EKeys::P, IE_Pressed, this, &AMultiBallPlayerController::DebugCheatWin);
 }
 
 void AMultiBallPlayerController::Tick(float DeltaTime)
@@ -229,6 +230,16 @@ void AMultiBallPlayerController::DebugEnterDrop()
     if (GM)
     {
         GM->EnterDropPhase();
+    }
+}
+
+void AMultiBallPlayerController::DebugCheatWin()
+{
+    AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(GetWorld()->GetAuthGameMode());
+    if (GM && GM->GetCurrentPhase() == EGamePhase::Drop)
+    {
+        ShowNotification(TEXT("!!! CHEAT: INSTANT WIN !!!"), 3.0f, FLinearColor::Red);
+        GM->CheatWinRound();
     }
 }
 
@@ -362,11 +373,11 @@ void AMultiBallPlayerController::UpdateGhostPreview()
     }
 }
 
-void AMultiBallPlayerController::ShowNotification(const FString& Message, float Duration)
+void AMultiBallPlayerController::ShowNotification(const FString& Message, float Duration, FLinearColor Color)
 {
     if (NotificationWidgetInstance)
     {
-        NotificationWidgetInstance->ShowMessage(Message, Duration);
+        NotificationWidgetInstance->ShowMessage(Message, Duration, Color);
     }
 }
 

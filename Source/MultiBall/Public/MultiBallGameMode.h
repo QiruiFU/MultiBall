@@ -45,6 +45,10 @@ public:
 	UFUNCTION()
 	void OnSkillSelected(ESpecialSkill ChosenSkill);
 
+	/** Debug cheat: instantly win the current round during Drop phase. */
+	UFUNCTION(BlueprintCallable, Category = "Debug")
+	void CheatWinRound();
+
 	// --- Accessors ---
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Game Loop")
