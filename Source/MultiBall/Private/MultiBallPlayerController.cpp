@@ -14,7 +14,10 @@
 #include "PhaseButtonWidget.h"
 #include "SpecialSkillWidget.h"
 #include "SpecialSkillSubsystem.h"
+#include "SpecialSkillSubsystem.h"
 #include "BoardActor.h"
+#include "RemainingBallsWidget.h"
+#include "BallEmitterActor.h"
 
 AMultiBallPlayerController::AMultiBallPlayerController()
 {
@@ -25,6 +28,7 @@ AMultiBallPlayerController::AMultiBallPlayerController()
     NotificationWidgetInstance = nullptr;
     PhaseButtonWidgetInstance = nullptr;
     SpecialSkillWidgetInstance = nullptr;
+    RemainingBallsWidgetInstance = nullptr;
     PrimaryActorTick.bCanEverTick = true;
 }
 
@@ -154,9 +158,20 @@ void AMultiBallPlayerController::SelectPlaceable(TSubclassOf<APlaceableActor> Pl
 
 void AMultiBallPlayerController::HandlePlacementClick()
 {
-    // Only allow placement during Shop phase
     AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(GetWorld()->GetAuthGameMode());
-    if (!GM || GM->GetCurrentPhase() != EGamePhase::Shop)
+    if (!GM) return;
+
+    if (GM->GetCurrentPhase() == EGamePhase::Drop)
+    {
+        if (GM->BallEmitter)
+        {
+            GM->BallEmitter->ManualDropBall();
+        }
+        return;
+    }
+
+    // Only allow placement during Shop phase
+    if (GM->GetCurrentPhase() != EGamePhase::Shop)
     {
         ShowNotification(TEXT("Only allowed to place during Shop phase!"));
         return;
@@ -301,6 +316,17 @@ void AMultiBallPlayerController::HandlePhaseChanged(EGamePhase NewPhase)
             }
         }
     }
+    else if (NewPhase == EGamePhase::Drop)
+    {
+        if (IsLocalController() && !RemainingBallsWidgetInstance)
+        {
+            RemainingBallsWidgetInstance = CreateWidget<URemainingBallsWidget>(this, URemainingBallsWidget::StaticClass());
+            if (RemainingBallsWidgetInstance)
+            {
+                RemainingBallsWidgetInstance->AddToViewport();
+            }
+        }
+    }
     else
     {
         // Leaving active phases - clean up
@@ -310,6 +336,12 @@ void AMultiBallPlayerController::HandlePhaseChanged(EGamePhase NewPhase)
         {
             BuildWidget->RemoveFromParent();
             BuildWidget = nullptr;
+        }
+
+        if (RemainingBallsWidgetInstance)
+        {
+            RemainingBallsWidgetInstance->RemoveFromParent();
+            RemainingBallsWidgetInstance = nullptr;
         }
     }
 }

@@ -9,6 +9,7 @@
 class ABallActor;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAllBallsFinished);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBallsRemainingChanged, int32, BallsRemaining);
 
 /**
  * Spawns balls during the Drop phase with configurable
@@ -30,7 +31,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Emitter")
 	void StopDropSequence();
 
-	/** Manually drop a single ball. */
+	/** Manually drop a single ball from user input. */
+	UFUNCTION(BlueprintCallable, Category = "Emitter")
+	void ManualDropBall();
+
+	/** Drop a single ball immediately (internal/sequence). */
 	UFUNCTION(BlueprintCallable, Category = "Emitter")
 	void DropBall();
 
@@ -38,7 +43,19 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Emitter")
 	FOnAllBallsFinished OnAllBallsFinished;
 
+	/** Broadcast when the number of remaining balls changes. */
+	UPROPERTY(BlueprintAssignable, Category = "Emitter")
+	FOnBallsRemainingChanged OnBallsRemainingChanged;
+
+	/** Get the number of balls remaining to be dropped. */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Emitter")
+	int32 GetBallsRemaining() const { return BallsRemaining; }
+
 	// --- Configuration ---
+
+	/** If true, the emitter waits for ManualDropBall() instead of auto-dropping on a timer. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Emitter")
+	bool bManualDrop;
 
 	/** Ball class to spawn. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Emitter")

@@ -62,7 +62,6 @@ protected:
 
 
 
-
     UFUNCTION()
     void HandlePhaseChanged(EGamePhase NewPhase);
 
@@ -96,6 +95,9 @@ private:
 
     UPROPERTY()
     USpecialSkillWidget* SpecialSkillWidgetInstance;
+
+    UPROPERTY()
+    class URemainingBallsWidget* RemainingBallsWidgetInstance;
 
     UPROPERTY()
     UUserWidget* FloatingScoreWidgetInstance;

@@ -29,6 +29,7 @@ ABallEmitterActor::ABallEmitterActor()
 	BallsPerRound = 5;
 	OscillationSpeed = 2.0f;
 	OscillationRange = 200.0f;
+	bManualDrop = true;
 
 	// State
 	bIsDropping = false;
@@ -55,7 +56,7 @@ void ABallEmitterActor::Tick(float DeltaTime)
 	SetActorLocation(NewLocation);
 
 	// Handle automatic drop sequence
-	if (bIsDropping && BallsRemaining > 0)
+	if (bIsDropping && BallsRemaining > 0 && !bManualDrop)
 	{
 		DropTimer += DeltaTime;
 		if (DropTimer >= DropInterval)
@@ -63,6 +64,7 @@ void ABallEmitterActor::Tick(float DeltaTime)
 			DropTimer = 0.0f;
 			DropBall();
 			BallsRemaining--;
+			OnBallsRemainingChanged.Broadcast(BallsRemaining);
 
 			if (BallsRemaining <= 0)
 			{
@@ -77,8 +79,15 @@ void ABallEmitterActor::StartDropSequence(int32 NumBalls)
 {
 	BallsRemaining = NumBalls > 0 ? NumBalls : BallsPerRound;
 	bIsDropping = true;
-	DropTimer = DropInterval; // Drop the first ball immediately
 	ActiveBallCount = 0;
+
+	// Broadcast initial count
+	OnBallsRemainingChanged.Broadcast(BallsRemaining);
+
+	if (!bManualDrop)
+	{
+		DropTimer = DropInterval; // Drop the first ball immediately
+	}
 
 	UE_LOG(LogTemp, Log, TEXT("Emitter: Starting drop sequence with %d balls."), BallsRemaining);
 }
@@ -87,14 +96,31 @@ void ABallEmitterActor::StopDropSequence()
 {
 	bIsDropping = false;
 	BallsRemaining = 0;
+	OnBallsRemainingChanged.Broadcast(BallsRemaining);
 	UE_LOG(LogTemp, Log, TEXT("Emitter: Drop sequence stopped."));
+}
+
+void ABallEmitterActor::ManualDropBall()
+{
+	if (bIsDropping && BallsRemaining > 0)
+	{
+		DropBall();
+		BallsRemaining--;
+		OnBallsRemainingChanged.Broadcast(BallsRemaining);
+
+		if (BallsRemaining <= 0)
+		{
+			bIsDropping = false;
+			UE_LOG(LogTemp, Log, TEXT("Emitter: All balls manually dropped. Waiting for them to settle..."));
+		}
+	}
 }
 
 void ABallEmitterActor::DropBall()
 {
-	if (!BallClass)
+	if (!BallClass || !BallClass->IsChildOf(AActor::StaticClass()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Emitter: No BallClass set!"));
+		UE_LOG(LogTemp, Warning, TEXT("Emitter: No valid BallClass set! Prevented crash."));
 		return;
 	}
 
