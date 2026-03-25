@@ -76,6 +76,24 @@ void AMultiBallPlayerController::BeginPlay()
             PhaseButtonWidgetInstance->AddToViewport(50);
         }
     }
+    if (IsLocalController())
+    {
+        /*
+        TSubclassOf<UUserWidget> YourClass = StaticLoadClass(UUserWidget::StaticClass(), nullptr, TEXT("/Game/UI/WBP_FloatingScoreHolder.WBP_FloatingScoreHolder_C"));
+        if (YourClass != nullptr)
+        {
+            FloatingScoreWidgetInstance = CreateWidget<UUserWidget>(this, YourClass);
+            if (FloatingScoreWidgetInstance)
+            {
+                FloatingScoreWidgetInstance->AddToViewport(50);
+            }
+        }
+        else
+        {
+            UE_LOG(LogTemp, Log, TEXT("WidgetBlueprintNotFound"));
+        }
+        */
+    }
 
     // Create special skill selection widget
     if (IsLocalController())

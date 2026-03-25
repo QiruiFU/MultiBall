@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "MultiBallTypes.h"
+#include "Components/WidgetComponent.h"
+#include "UFloatingScoreWidget.h"
 #include "PlaceableActor.generated.h"
 
 class ABallActor;
@@ -62,6 +64,13 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USphereComponent* PlacementBlockingRadius;
+
+	UPROPERTY()
+	UWidgetComponent* WidgetComponent;
+
+	UPROPERTY()
+
+	UUFloatingScoreWidget* WidgetInstance;
 
 	// --- Scoring Interface ---
 

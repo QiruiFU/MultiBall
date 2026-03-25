@@ -5,8 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "PlaceableActor.h"
+#include "UFloatingScoreWidget.h"
 #include "MultiBallTypes.h"
+
 #include "MultiBallPlayerController.generated.h"
+
 
 class UNotificationWidget;
 class UPhaseButtonWidget;
@@ -57,6 +60,9 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
     TSubclassOf<USpecialSkillWidget> SpecialSkillWidgetClass;
 
+
+
+
     UFUNCTION()
     void HandlePhaseChanged(EGamePhase NewPhase);
 
@@ -90,6 +96,9 @@ private:
 
     UPROPERTY()
     USpecialSkillWidget* SpecialSkillWidgetInstance;
+
+    UPROPERTY()
+    UUserWidget* FloatingScoreWidgetInstance;
 
     UFUNCTION()
     void OnSkillSelectedFromUI(ESpecialSkill ChosenSkill);

@@ -4,6 +4,7 @@
 #include "BallActor.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+
 #include "UObject/ConstructorHelpers.h"
 
 APlaceableActor::APlaceableActor()
@@ -43,12 +44,39 @@ APlaceableActor::APlaceableActor()
 	MaxDurability = 0; // 0 = indestructible
 	CurrentDurability = 0;
 	bIsBroken = false;
+
+	
+	TSubclassOf<UUFloatingScoreWidget> WidgetClass = StaticLoadClass(UUFloatingScoreWidget::StaticClass(), nullptr, TEXT("/Game/UI/WBP_FloatingScoreHolder.WBP_FloatingScoreHolder_C"));
+	if (WidgetClass != nullptr)
+	{
+
+		WidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("WidgetComponent"));
+		if (WidgetComponent != nullptr)
+		{
+			WidgetComponent->SetWidgetClass(WidgetClass);
+			WidgetComponent->SetupAttachment(RootComponent);
+			WidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
+			
+			
+		}
+		else
+		{
+			UE_LOG(LogTemp, Log, TEXT("WidgetCompnentNotCreated"));
+		}
+
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("WidgetBlueprintNotFound"));
+	}
+	
 }
 
 void APlaceableActor::BeginPlay()
 {
 	Super::BeginPlay();
-
+	WidgetInstance = Cast<UUFloatingScoreWidget>(WidgetComponent->GetUserWidgetObject());
+	
 	// Initialise current durability from max
 	if (MaxDurability > 0)
 	{
@@ -69,6 +97,9 @@ void APlaceableActor::OnBallHit(ABallActor* Ball)
 	}
 
 	// Apply scoring to the ball
+	UE_LOG(LogTemp, Log, TEXT("BallHit?"));
+	WidgetInstance->OnScoreChanged(ChipValue, true);
+	WidgetInstance->OnScoreChanged(MultiplierValue, false);
 	Ball->AddChips(ChipValue);
 	Ball->AddMultiplier(MultiplierValue);
 
