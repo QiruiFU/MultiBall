@@ -2,7 +2,9 @@
 
 #include "ShopWidget.h"
 #include "Components/Button.h"
+#include "Components/Border.h"
 #include "MultiBallPlayerState.h"
+#include "MultiBallGameMode.h"
 #include "PegActor.h"
 #include "BumperActor.h"
 #include "Kismet/GameplayStatics.h"
@@ -23,6 +25,26 @@ void UShopWidget::NativeConstruct()
 		BumperButton->OnClicked.AddDynamic(this, &UShopWidget::OnBumperClicked);
 		UE_LOG(LogTemp, Log, TEXT("ShopWidget: BumperButton bound."));
 	}
+
+	// Bind to phase changes to show/hide shop UI in C++
+	AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	if (GM)
+	{
+		GM->OnPhaseChanged.AddDynamic(this, &UShopWidget::HandlePhaseChanged);
+		// Apply initial state
+		HandlePhaseChanged(GM->GetCurrentPhase());
+	}
+}
+
+void UShopWidget::NativeDestruct()
+{
+	AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	if (GM)
+	{
+		GM->OnPhaseChanged.RemoveDynamic(this, &UShopWidget::HandlePhaseChanged);
+	}
+
+	Super::NativeDestruct();
 }
 
 void UShopWidget::OnPegClicked()
@@ -78,4 +100,18 @@ void UShopWidget::BuyItem(TSubclassOf<APlaceableActor> ItemClass)
 		UE_LOG(LogTemp, Warning, TEXT(">>> ShopWidget: Cannot afford %s. Cost: %d, Have: %d"),
 		       *GetNameSafe(ItemClass), CDO->Cost, PS->PlayerCoins);
 	}
+}
+
+void UShopWidget::HandlePhaseChanged(EGamePhase NewPhase)
+{
+	ESlateVisibility Vis = (NewPhase == EGamePhase::Shop)
+		? ESlateVisibility::Visible
+		: ESlateVisibility::Hidden;
+
+	if (Border_0)       Border_0->SetVisibility(Vis);
+	if (ShopNameBorder) ShopNameBorder->SetVisibility(Vis);
+	if (CoinsBorder)    CoinsBorder->SetVisibility(Vis);
+
+	UE_LOG(LogTemp, Log, TEXT("ShopWidget: Phase %d -> Shop UI %s"),
+	       (int32)NewPhase, Vis == ESlateVisibility::Visible ? TEXT("SHOWN") : TEXT("HIDDEN"));
 }

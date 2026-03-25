@@ -9,6 +9,7 @@
 #include "OpponentDataAsset.h"
 #include "BoardActor.h"
 #include "BoardCameraPawn.h"
+#include "SpecialSkillSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 
 AMultiBallGameMode::AMultiBallGameMode()
@@ -135,7 +136,11 @@ void AMultiBallGameMode::EnterDropPhase()
 
 	if (BallEmitter)
 	{
-		BallEmitter->StartDropSequence(BallEmitter->BallsPerRound);
+		// Apply ExtraBalls skill
+		USpecialSkillSubsystem* SkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
+		int32 ExtraBalls = SkillSys ? SkillSys->GetExtraBalls() : 0;
+		int32 TotalBalls = BallEmitter->BallsPerRound + ExtraBalls;
+		BallEmitter->StartDropSequence(TotalBalls);
 	}
 
 	// Start Drop phase timeout timer
@@ -165,6 +170,11 @@ void AMultiBallGameMode::EnterRewardsPhase()
 
 	if (bPlayerWon)
 	{
+		// Calculate bonus coins from ExtraCoins skill
+		USpecialSkillSubsystem* SkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
+		int32 BonusCoins = SkillSys ? SkillSys->GetExtraCoins() : 0;
+		int32 TotalReward = WinRewardCoins + BonusCoins;
+
 		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 		{
 			APlayerController* PC = It->Get();
@@ -173,8 +183,9 @@ void AMultiBallGameMode::EnterRewardsPhase()
 				AMultiBallPlayerState* PS = PC->GetPlayerState<AMultiBallPlayerState>();
 				if (PS)
 				{
-					PS->PlayerCoins += WinRewardCoins;
-					UE_LOG(LogTemp, Log, TEXT("GameMode: Awarded %d coins. Total: %d"), WinRewardCoins, PS->PlayerCoins);
+					PS->PlayerCoins += TotalReward;
+					UE_LOG(LogTemp, Log, TEXT("GameMode: Awarded %d coins (base %d + bonus %d). Total: %d"),
+					       TotalReward, WinRewardCoins, BonusCoins, PS->PlayerCoins);
 				}
 			}
 		}
@@ -197,8 +208,28 @@ void AMultiBallGameMode::EnterRewardsPhase()
 		}
 
 		OnPhaseChanged.Broadcast(CurrentPhase);
-		EnterShopPhase();
+		// Go to skill selection instead of directly to shop
+		EnterSkillSelectPhase();
 	}
+}
+
+void AMultiBallGameMode::EnterSkillSelectPhase()
+{
+	CurrentPhase = EGamePhase::SkillSelect;
+	UE_LOG(LogTemp, Log, TEXT("GameMode: === SKILL SELECT PHASE ==="));
+	OnPhaseChanged.Broadcast(CurrentPhase);
+}
+
+void AMultiBallGameMode::OnSkillSelected(ESpecialSkill ChosenSkill)
+{
+	USpecialSkillSubsystem* SkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
+	if (SkillSys)
+	{
+		SkillSys->ActivateSkill(ChosenSkill);
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("GameMode: Skill selected, moving to Shop."));
+	EnterShopPhase();
 }
 
 void AMultiBallGameMode::OnAllBallsFinished()

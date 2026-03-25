@@ -5,6 +5,7 @@
 #include "ScoreSubsystem.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "SpecialSkillSubsystem.h"
 #include "UObject/ConstructorHelpers.h"
 
 ABallActor::ABallActor()
@@ -49,6 +50,25 @@ void ABallActor::BeginPlay()
 
 	// Bind physics hit event
 	CollisionComponent->OnComponentHit.AddDynamic(this, &ABallActor::OnHit);
+
+	// Apply skill effects at spawn
+	USpecialSkillSubsystem* SkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
+	if (SkillSys)
+	{
+		// BiggerBalls: scale up
+		float ScaleMult = SkillSys->GetBallScaleMultiplier();
+		if (ScaleMult > 1.0f)
+		{
+			SetActorScale3D(GetActorScale3D() * ScaleMult);
+		}
+
+		// BonusMultiplier: add to starting multiplier
+		float BonusMult = SkillSys->GetBonusMultiplier();
+		if (BonusMult > 0.0f)
+		{
+			AccumulatedMultiplier += BonusMult;
+		}
+	}
 }
 
 void ABallActor::Tick(float DeltaTime)
@@ -100,6 +120,27 @@ void ABallActor::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 	if (Placeable)
 	{
 		Placeable->OnBallHit(this);
+
+		// SplitChance: chance to spawn an extra ball on peg hit
+		USpecialSkillSubsystem* SkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
+		if (SkillSys)
+		{
+			float SplitChance = SkillSys->GetSplitChanceBonus();
+			if (SplitChance > 0.0f && FMath::FRand() < SplitChance)
+			{
+				// Spawn a split ball at current location
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+				ABallActor* SplitBall = GetWorld()->SpawnActor<ABallActor>(GetClass(), GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+				if (SplitBall)
+				{
+					// Give the split ball a random sideways impulse
+					FVector Impulse = FVector(FMath::FRandRange(-200.0f, 200.0f), FMath::FRandRange(-200.0f, 200.0f), 100.0f);
+					SplitBall->CollisionComponent->AddImpulse(Impulse);
+					UE_LOG(LogTemp, Log, TEXT("Ball %s split! New ball spawned."), *GetName());
+				}
+			}
+		}
 	}
 }
 

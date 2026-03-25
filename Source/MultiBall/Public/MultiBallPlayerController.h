@@ -10,6 +10,7 @@
 
 class UNotificationWidget;
 class UPhaseButtonWidget;
+class USpecialSkillWidget;
 
 /**
  * Player controller handling shop, placement, and ghost preview.
@@ -53,6 +54,9 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
     TSubclassOf<UPhaseButtonWidget> PhaseButtonWidgetClass;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+    TSubclassOf<USpecialSkillWidget> SpecialSkillWidgetClass;
+
     UFUNCTION()
     void HandlePhaseChanged(EGamePhase NewPhase);
 
@@ -83,4 +87,10 @@ private:
 
     UPROPERTY()
     UPhaseButtonWidget* PhaseButtonWidgetInstance;
+
+    UPROPERTY()
+    USpecialSkillWidget* SpecialSkillWidgetInstance;
+
+    UFUNCTION()
+    void OnSkillSelectedFromUI(ESpecialSkill ChosenSkill);
 };

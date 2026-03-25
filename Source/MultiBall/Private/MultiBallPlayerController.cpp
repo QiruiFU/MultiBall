@@ -12,6 +12,8 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "NotificationWidget.h"
 #include "PhaseButtonWidget.h"
+#include "SpecialSkillWidget.h"
+#include "SpecialSkillSubsystem.h"
 #include "BoardActor.h"
 
 AMultiBallPlayerController::AMultiBallPlayerController()
@@ -22,6 +24,7 @@ AMultiBallPlayerController::AMultiBallPlayerController()
     GhostPreviewActor = nullptr;
     NotificationWidgetInstance = nullptr;
     PhaseButtonWidgetInstance = nullptr;
+    SpecialSkillWidgetInstance = nullptr;
     PrimaryActorTick.bCanEverTick = true;
 }
 
@@ -71,6 +74,17 @@ void AMultiBallPlayerController::BeginPlay()
         if (PhaseButtonWidgetInstance)
         {
             PhaseButtonWidgetInstance->AddToViewport(50);
+        }
+    }
+
+    // Create special skill selection widget
+    if (IsLocalController())
+    {
+        SpecialSkillWidgetInstance = CreateWidget<USpecialSkillWidget>(this, USpecialSkillWidget::StaticClass());
+        if (SpecialSkillWidgetInstance)
+        {
+            SpecialSkillWidgetInstance->AddToViewport(200);
+            SpecialSkillWidgetInstance->OnSkillChosen.AddDynamic(this, &AMultiBallPlayerController::OnSkillSelectedFromUI);
         }
     }
 
@@ -254,6 +268,19 @@ void AMultiBallPlayerController::HandlePhaseChanged(EGamePhase NewPhase)
             SpawnGhostPreview();
         }
     }
+    else if (NewPhase == EGamePhase::SkillSelect)
+    {
+        // Show skill selection UI
+        if (SpecialSkillWidgetInstance)
+        {
+            USpecialSkillSubsystem* SkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
+            if (SkillSys)
+            {
+                TArray<FSpecialSkillData> Choices = SkillSys->GenerateSkillChoices();
+                SpecialSkillWidgetInstance->ShowChoices(Choices);
+            }
+        }
+    }
     else
     {
         // Leaving active phases - clean up
@@ -349,5 +376,14 @@ void AMultiBallPlayerController::ShowNotification(const FString& Message, float 
     if (NotificationWidgetInstance)
     {
         NotificationWidgetInstance->ShowMessage(Message, Duration);
+    }
+}
+
+void AMultiBallPlayerController::OnSkillSelectedFromUI(ESpecialSkill ChosenSkill)
+{
+    AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(GetWorld()->GetAuthGameMode());
+    if (GM)
+    {
+        GM->OnSkillSelected(ChosenSkill);
     }
 }

@@ -1,17 +1,24 @@
 // Copyright Autonomix. All Rights Reserved.
 
 #include "ScoreSubsystem.h"
+#include "SpecialSkillSubsystem.h"
 #include "Engine/Engine.h"
 
 void UScoreSubsystem::AddBallScore(int32 Chips, float Multiplier)
 {
-	int64 BallScore = static_cast<int64>(Chips * Multiplier);
+	// Apply ScoreDoubler skill
+	USpecialSkillSubsystem* SkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
+	float SkillMult = SkillSys ? SkillSys->GetScoreMultiplier() : 1.0f;
+
+	int64 BallScore = static_cast<int64>(Chips * Multiplier * SkillMult);
 	RoundScore.Chips += Chips;
 	// Overall multiplier grows additively with each ball
 	RoundScore.Multiplier += (Multiplier - 1.0f);
+	// Apply skill multiplier to the stored multiplier as well
+	// (we track it separately so GetTotalScore reflects it)
 
-	UE_LOG(LogTemp, Log, TEXT("ScoreSubsystem: Ball scored %lld (%d chips x %.2f mult). Round total: %lld"),
-	       BallScore, Chips, Multiplier, RoundScore.GetTotalScore());
+	UE_LOG(LogTemp, Log, TEXT("ScoreSubsystem: Ball scored %lld (%d chips x %.2f mult x %.1f skill). Round total: %lld"),
+	       BallScore, Chips, Multiplier, SkillMult, RoundScore.GetTotalScore());
 
 	// On-screen debug display
 	if (GEngine)
@@ -39,5 +46,9 @@ void UScoreSubsystem::ResetRoundScore()
 
 bool UScoreSubsystem::DidPlayerWin(int64 OpponentScore) const
 {
-	return RoundScore.GetTotalScore() > OpponentScore;
+	// Apply ScoreDoubler skill to final comparison
+	USpecialSkillSubsystem* SkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
+	float SkillMult = SkillSys ? SkillSys->GetScoreMultiplier() : 1.0f;
+	int64 FinalScore = static_cast<int64>(RoundScore.GetTotalScore() * SkillMult);
+	return FinalScore > OpponentScore;
 }

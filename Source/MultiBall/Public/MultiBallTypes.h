@@ -16,6 +16,35 @@ enum class EGamePhase : uint8
 	Drop		UMETA(DisplayName = "Drop"),
 	Rewards		UMETA(DisplayName = "Rewards"),
 	GameOver	UMETA(DisplayName = "Game Over"),
+	SkillSelect	UMETA(DisplayName = "Skill Select"),
+};
+
+/** Types of special skills the player can acquire after each round win. */
+UENUM(BlueprintType)
+enum class ESpecialSkill : uint8
+{
+	ExtraBalls		UMETA(DisplayName = "Extra Balls"),
+	SplitChance		UMETA(DisplayName = "Split Chance"),
+	ScoreDoubler	UMETA(DisplayName = "Score Doubler"),
+	BonusMultiplier	UMETA(DisplayName = "Bonus Multiplier"),
+	ExtraCoins		UMETA(DisplayName = "Extra Coins"),
+	BiggerBalls		UMETA(DisplayName = "Bigger Balls"),
+};
+
+/** Metadata describing a special skill for UI display. */
+USTRUCT(BlueprintType)
+struct FSpecialSkillData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
+	ESpecialSkill SkillType = ESpecialSkill::ExtraBalls;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
+	FText DisplayName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
+	FText Description;
 };
 
 /** Types of placeable components. */

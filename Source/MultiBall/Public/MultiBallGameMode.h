@@ -11,6 +11,7 @@ class ABallEmitterActor;
 class UShopComponent;
 class UOpponentDataAsset;
 class ABoardActor;
+class USpecialSkillSubsystem;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPhaseChanged, EGamePhase, NewPhase);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRoundComplete, int32, Round, bool, bPlayerWon);
@@ -39,6 +40,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Game Loop")
 	void EnterRewardsPhase();
+
+	UFUNCTION(BlueprintCallable, Category = "Game Loop")
+	void EnterSkillSelectPhase();
+
+	/** Called when the player picks a skill from the SkillSelect UI. */
+	UFUNCTION()
+	void OnSkillSelected(ESpecialSkill ChosenSkill);
 
 	// --- Accessors ---
 
