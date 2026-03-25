@@ -36,7 +36,7 @@ ABoardCameraPawn::ABoardCameraPawn()
 	PanBoundsX = 600.0f;
 	PanBoundsZ = 900.0f;
 
-	ZoomSpeed = 120.0f;
+	ZoomSpeed = 600.0f;
 	MinZoomDistance = 400.0f;
 	MaxZoomDistance = 2500.0f;
 
@@ -74,12 +74,7 @@ void ABoardCameraPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	// WASD keyboard panning — use direct key bindings
-	PlayerInputComponent->BindKey(EKeys::W, IE_Pressed, this, &ABoardCameraPawn::OnScrollUp).bConsumeInput = false;
-	PlayerInputComponent->BindKey(EKeys::S, IE_Pressed, this, &ABoardCameraPawn::OnScrollDown).bConsumeInput = false;
-
-	// Use lambdas via key held state (we poll keys in Tick instead)
-	// No axis needed — Tick checks IsInputKeyDown
+	// WASD keyboard panning is handled by polling IsInputKeyDown in Tick.
 
 	// Scroll wheel zoom
 	PlayerInputComponent->BindKey(EKeys::MouseScrollUp, IE_Pressed, this, &ABoardCameraPawn::OnScrollUp);
@@ -102,9 +97,8 @@ void ABoardCameraPawn::Tick(float DeltaTime)
 
 	FVector Location = GetActorLocation();
 
-	// --- Keyboard panning (poll held keys) ---
+	// --- Keyboard panning (A/D) and zoom (W/S) ---
 	float PanX = 0.0f;
-	float PanZ = 0.0f;
 
 	if (PC->IsInputKeyDown(EKeys::D))
 	{
@@ -114,19 +108,26 @@ void ABoardCameraPawn::Tick(float DeltaTime)
 	{
 		PanX -= 1.0f;
 	}
+
+	if (!FMath::IsNearlyZero(PanX))
+	{
+		Location.X += PanX * PanSpeed * DeltaTime;
+	}
+
+	// W/S = zoom forward/backward (adjust spring arm length)
+	float ZoomInput = 0.0f;
 	if (PC->IsInputKeyDown(EKeys::W))
 	{
-		PanZ += 1.0f;
+		ZoomInput -= 1.0f; // W = closer to board
 	}
 	if (PC->IsInputKeyDown(EKeys::S))
 	{
-		PanZ -= 1.0f;
+		ZoomInput += 1.0f; // S = farther from board
 	}
-
-	if (!FMath::IsNearlyZero(PanX) || !FMath::IsNearlyZero(PanZ))
+	if (!FMath::IsNearlyZero(ZoomInput))
 	{
-		Location.X += PanX * PanSpeed * DeltaTime;
-		Location.Z += PanZ * PanSpeed * DeltaTime;
+		float NewLength = SpringArm->TargetArmLength + ZoomInput * ZoomSpeed * DeltaTime;
+		SpringArm->TargetArmLength = FMath::Clamp(NewLength, MinZoomDistance, MaxZoomDistance);
 	}
 
 	// --- Right-click drag panning ---
