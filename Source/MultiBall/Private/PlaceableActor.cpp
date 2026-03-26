@@ -3,7 +3,10 @@
 #include "PlaceableActor.h"
 #include "BallActor.h"
 #include "Components/SphereComponent.h"
+#include "BallActor.h"
+#include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "InteractionRuleComponent.h"
 
 #include "UObject/ConstructorHelpers.h"
 
@@ -39,8 +42,6 @@ APlaceableActor::APlaceableActor()
 	// Defaults
 	Cost = 10;
 	PlaceableType = EPlaceableType::Peg;
-	ChipValue = 1;
-	MultiplierValue = 1.0f;
 	MaxDurability = 0; // 0 = indestructible
 	CurrentDurability = 0;
 	bIsBroken = false;
@@ -96,12 +97,17 @@ void APlaceableActor::OnBallHit(ABallActor* Ball)
 		return;
 	}
 
-	// Apply scoring to the ball
-	UE_LOG(LogTemp, Log, TEXT("BallHit?"));
-	WidgetInstance->OnScoreChanged(ChipValue, true);
-	WidgetInstance->OnScoreChanged(MultiplierValue, false);
-	Ball->AddChips(ChipValue);
-	Ball->AddMultiplier(MultiplierValue);
+	// Execute all attached Interaction Rules
+	TArray<UInteractionRuleComponent*> Rules;
+	GetComponents<UInteractionRuleComponent>(Rules);
+	
+	for (UInteractionRuleComponent* Rule : Rules)
+	{
+		if (Rule)
+		{
+			Rule->ApplyRule(Ball, this);
+		}
+	}
 
 	// Decrement durability
 	if (MaxDurability > 0)
@@ -115,7 +121,6 @@ void APlaceableActor::OnBallHit(ABallActor* Ball)
 	}
 
 	FScoreData BallScore = Ball->GetScoreData();
-	UE_LOG(LogTemp, Log, TEXT("Ball hit %s: +%d chips, +%.2f mult → Ball total: %d chips x%.2f mult = %lld"),
-	       *GetName(), ChipValue, MultiplierValue,
-	       BallScore.Chips, BallScore.Multiplier, BallScore.GetTotalScore());
+	UE_LOG(LogTemp, Log, TEXT("Ball hit %s. Ball total: %d chips x%.2f mult = %lld"),
+	       *GetName(), BallScore.Chips, BallScore.Multiplier, BallScore.GetTotalScore());
 }

@@ -32,13 +32,7 @@ public:
 
 	// --- Scoring ---
 
-	/** Chip value added to a ball on hit. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Scoring")
-	int32 ChipValue;
-
-	/** Multiplier value applied to a ball on hit. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Scoring")
-	float MultiplierValue;
+	// Scoring is now handled via attached UInteractionRuleComponent objects.
 
 	// --- Durability ---
 

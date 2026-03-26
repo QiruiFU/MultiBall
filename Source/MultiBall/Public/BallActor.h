@@ -32,8 +32,23 @@ public:
 	/** Add multiplier from a placeable hit. */
 	void AddMultiplier(float Amount);
 
+	/** Multiply the current multiplier from a placeable hit. */
+	void MultiplyMultiplier(float Amount);
+
 	/** Get current accumulated score data. */
 	FScoreData GetScoreData() const;
+
+	/** Starting chips count. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Scoring")
+	int32 BaseChips;
+
+	/** Starting multiplier. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Scoring")
+	float BaseMultiplier;
+
+	/** Cooldown for hitting the same object. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	float CollisionCooldown;
 
 	/** Broadcast when the ball settles and finalizes its score. */
 	UPROPERTY(BlueprintAssignable, Category = "Score")
@@ -88,4 +103,7 @@ private:
 	float SettleTimer;
 	bool bHasSettled;
 	FTimerHandle LifespanTimerHandle;
+
+	/** Tracks the last time this ball hit a specific actor to enforce cooldown. */
+	TMap<AActor*, float> LastHitTimes;
 };

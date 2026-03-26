@@ -3,14 +3,16 @@
 #include "PegActor.h"
 #include "BallActor.h"
 #include "Components/SphereComponent.h"
+#include "AdditiveScoreRuleComponent.h"
 
 APegActor::APegActor()
 {
 	PlaceableType = EPlaceableType::Peg;
 	Cost = 10;
-	ChipValue = 5;
-	MultiplierValue = 1.0f;
 	MaxDurability = 0; // Pegs are indestructible by default
+
+	UAdditiveScoreRuleComponent* AdditiveRule = CreateDefaultSubobject<UAdditiveScoreRuleComponent>(TEXT("AdditiveRule"));
+	AdditiveRule->MultiplierAdded = 0.2f;
 
 	// Smaller collision for pegs
 	if (CollisionComponent)

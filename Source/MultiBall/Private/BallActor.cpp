@@ -32,7 +32,10 @@ ABallActor::ABallActor()
 		MeshComponent->SetStaticMesh(SphereMesh.Object);
 	}
 
-	// Scoring
+	// Scoring defaults
+	BaseChips = 10;
+	BaseMultiplier = 1.0f;
+	CollisionCooldown = 0.1f;
 	AccumulatedChips = 0;
 	AccumulatedMultiplier = 1.0f;
 
@@ -54,6 +57,10 @@ void ABallActor::BeginPlay()
 
 	// Start lifespan timer
 	GetWorld()->GetTimerManager().SetTimer(LifespanTimerHandle, this, &ABallActor::OnLifespanExpired, MaxLifespan, false);
+
+	// Initialize with base stats
+	AccumulatedChips = BaseChips;
+	AccumulatedMultiplier = BaseMultiplier;
 
 	// Apply skill effects at spawn
 	USpecialSkillSubsystem* SkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
@@ -123,6 +130,21 @@ void ABallActor::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 	APlaceableActor* Placeable = Cast<APlaceableActor>(OtherActor);
 	if (Placeable)
 	{
+		float CurrentTime = GetWorld()->GetTimeSeconds();
+		float* LastHitTimePtr = LastHitTimes.Find(OtherActor);
+
+		// Check cooldown
+		if (LastHitTimePtr && (CurrentTime - *LastHitTimePtr) < CollisionCooldown)
+		{
+			// Too soon to hit the same object again
+			UE_LOG(LogTemp, Verbose, TEXT("[Collision] %s hit %s but ignored due to Cooldown (%.2fs elapsed)."),
+			       *GetName(), *OtherActor->GetName(), (CurrentTime - *LastHitTimePtr));
+			return;
+		}
+
+		// Update last hit time
+		LastHitTimes.Add(OtherActor, CurrentTime);
+
 		Placeable->OnBallHit(this);
 
 		// SplitChance: chance to spawn an extra ball on peg hit
@@ -156,6 +178,11 @@ void ABallActor::AddChips(int32 Amount)
 void ABallActor::AddMultiplier(float Amount)
 {
 	AccumulatedMultiplier += Amount;
+}
+
+void ABallActor::MultiplyMultiplier(float Amount)
+{
+	AccumulatedMultiplier *= Amount;
 }
 
 FScoreData ABallActor::GetScoreData() const

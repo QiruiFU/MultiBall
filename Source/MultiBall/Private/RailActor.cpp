@@ -4,14 +4,16 @@
 #include "BallActor.h"
 #include "Components/SphereComponent.h"
 #include "Components/SplineComponent.h"
+#include "AdditiveScoreRuleComponent.h"
 
 ARailActor::ARailActor()
 {
 	PlaceableType = EPlaceableType::Rail;
 	Cost = 30;
-	ChipValue = 1;
-	MultiplierValue = 1.5f;
 	MaxDurability = 15;
+
+	UAdditiveScoreRuleComponent* AdditiveRule = CreateDefaultSubobject<UAdditiveScoreRuleComponent>(TEXT("AdditiveRule"));
+	AdditiveRule->MultiplierAdded = 0.5f;
 	GuideForce = 400.0f;
 
 	// Create spline component

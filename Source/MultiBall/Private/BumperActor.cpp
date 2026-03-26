@@ -3,6 +3,7 @@
 #include "BumperActor.h"
 #include "BallActor.h"
 #include "Components/SphereComponent.h"
+#include "AdditiveScoreRuleComponent.h"
 
 ABumperActor::ABumperActor()
 {
@@ -13,10 +14,11 @@ ABumperActor::ABumperActor()
 	MeshComponent->SetMaterial(0, mat);
 	PlaceableType = EPlaceableType::Bumper;
 	Cost = 25;
-	ChipValue = 2;
-	MultiplierValue = 2.0f;
 	MaxDurability = 20; // Bumpers wear out
 	BounceForce = 800.0f;
+
+	UAdditiveScoreRuleComponent* AdditiveRule = CreateDefaultSubobject<UAdditiveScoreRuleComponent>(TEXT("AdditiveRule"));
+	AdditiveRule->MultiplierAdded = 0.5f;
 
 	// Larger collision for bumpers
 	if (CollisionComponent)
