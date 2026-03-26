@@ -25,13 +25,7 @@ protected:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 
-	// --- BindWidget: UE auto-binds these to the Blueprint widgets of the same name ---
-
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UButton* PegButton;
-
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UButton* BumperButton;
+	// --- Auto-binding for borders ---
 
 	/** Shop panel borders — visibility controlled by C++ based on game phase. */
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
@@ -47,15 +41,12 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UTextBlock* RoundText;
 
-private:
-	UFUNCTION()
-	void OnPegClicked();
-
-	UFUNCTION()
-	void OnBumperClicked();
-
+public:
+	/** Called by dynamic shop buttons to purchase an item */
+	UFUNCTION(BlueprintCallable, Category = "Shop")
 	void BuyItem(TSubclassOf<APlaceableActor> ItemClass);
 
+private:
 	/** Called when the game phase changes — shows/hides shop UI. */
 	UFUNCTION()
 	void HandlePhaseChanged(EGamePhase NewPhase);

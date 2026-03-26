@@ -16,6 +16,8 @@ class UPhaseButtonWidget;
 class USpecialSkillWidget;
 class UGameOverWidget;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSpacebarAction, bool, bIsPressed);
+
 /**
  * Player controller handling shop, placement, and ghost preview.
  */
@@ -36,12 +38,18 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "Shop")
     TSubclassOf<APlaceableActor> SelectedPlaceableClass;
 
+    /** Broadcasts spacebar pressed state for game mechanics (like Flippers). */
+    UPROPERTY(BlueprintAssignable, Category = "Input")
+    FOnSpacebarAction OnSpacebarAction;
+
 protected:
     virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
     virtual void Tick(float DeltaTime) override;
 
     void HandlePlacementClick();
+    void HandleSpacebarPressed();
+    void HandleSpacebarReleased();
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
     TSubclassOf<class UUserWidget> ShopWidgetClass;

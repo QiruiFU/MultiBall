@@ -53,6 +53,7 @@ enum class EPlaceableType : uint8
 	Peg			UMETA(DisplayName = "Peg"),
 	Bumper		UMETA(DisplayName = "Bumper"),
 	Rail		UMETA(DisplayName = "Rail"),
+	Flipper		UMETA(DisplayName = "Flipper"),
 };
 
 /** Accumulated scoring data (Chips x Multiplier). */

@@ -14,18 +14,7 @@ void UShopWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	// Buttons are auto-bound via BindWidget meta — just attach click handlers
-	if (PegButton)
-	{
-		PegButton->OnClicked.AddDynamic(this, &UShopWidget::OnPegClicked);
-		UE_LOG(LogTemp, Log, TEXT("ShopWidget: PegButton bound."));
-	}
-
-	if (BumperButton)
-	{
-		BumperButton->OnClicked.AddDynamic(this, &UShopWidget::OnBumperClicked);
-		UE_LOG(LogTemp, Log, TEXT("ShopWidget: BumperButton bound."));
-	}
+	// UI Borders will be bound automatically
 
 	// Bind to phase changes to show/hide shop UI in C++
 	AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
@@ -48,18 +37,6 @@ void UShopWidget::NativeDestruct()
 	}
 
 	Super::NativeDestruct();
-}
-
-void UShopWidget::OnPegClicked()
-{
-	UE_LOG(LogTemp, Warning, TEXT(">>> ShopWidget: Peg clicked!"));
-	BuyItem(APegActor::StaticClass());
-}
-
-void UShopWidget::OnBumperClicked()
-{
-	UE_LOG(LogTemp, Warning, TEXT(">>> ShopWidget: Bumper clicked!"));
-	BuyItem(ABumperActor::StaticClass());
 }
 
 void UShopWidget::BuyItem(TSubclassOf<APlaceableActor> ItemClass)

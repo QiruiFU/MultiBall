@@ -136,10 +136,23 @@ void AMultiBallPlayerController::SetupInputComponent()
 
     InputComponent->BindKey(EKeys::LeftMouseButton, IE_Pressed, this, &AMultiBallPlayerController::HandlePlacementClick);
 
+    InputComponent->BindKey(EKeys::SpaceBar, IE_Pressed, this, &AMultiBallPlayerController::HandleSpacebarPressed);
+    InputComponent->BindKey(EKeys::SpaceBar, IE_Released, this, &AMultiBallPlayerController::HandleSpacebarReleased);
+
     // Debug key bindings: 1=Shop, 2=Drop, P=Cheat Win
     InputComponent->BindKey(EKeys::One, IE_Pressed, this, &AMultiBallPlayerController::DebugEnterShop);
     InputComponent->BindKey(EKeys::Two, IE_Pressed, this, &AMultiBallPlayerController::DebugEnterDrop);
     InputComponent->BindKey(EKeys::P, IE_Pressed, this, &AMultiBallPlayerController::DebugCheatWin);
+}
+
+void AMultiBallPlayerController::HandleSpacebarPressed()
+{
+    OnSpacebarAction.Broadcast(true);
+}
+
+void AMultiBallPlayerController::HandleSpacebarReleased()
+{
+    OnSpacebarAction.Broadcast(false);
 }
 
 void AMultiBallPlayerController::Tick(float DeltaTime)
