@@ -42,6 +42,7 @@ ABallActor::ABallActor()
 	SettleTimer = 0.0f;
 	bHasSettled = false;
 	KillZ = 1.0f;
+	MaxLifespan = 15.0f;
 }
 
 void ABallActor::BeginPlay()
@@ -50,6 +51,9 @@ void ABallActor::BeginPlay()
 
 	// Bind physics hit event
 	CollisionComponent->OnComponentHit.AddDynamic(this, &ABallActor::OnHit);
+
+	// Start lifespan timer
+	GetWorld()->GetTimerManager().SetTimer(LifespanTimerHandle, this, &ABallActor::OnLifespanExpired, MaxLifespan, false);
 
 	// Apply skill effects at spawn
 	USpecialSkillSubsystem* SkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
@@ -166,6 +170,8 @@ void ABallActor::SettleBall()
 {
 	bHasSettled = true;
 
+	GetWorld()->GetTimerManager().ClearTimer(LifespanTimerHandle);
+
 	UE_LOG(LogTemp, Log, TEXT("Ball %s settled: %d chips x %.2f mult = %lld total"),
 	       *GetName(), AccumulatedChips, AccumulatedMultiplier,
 	       static_cast<long long>(AccumulatedChips * AccumulatedMultiplier));
@@ -182,4 +188,13 @@ void ABallActor::SettleBall()
 
 	// Destroy after a short delay for visual feedback
 	SetLifeSpan(0.5f);
+}
+
+void ABallActor::OnLifespanExpired()
+{
+	if (!bHasSettled)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Ball %s expired due to max lifespan (%.1fs). Forcing settle."), *GetName(), MaxLifespan);
+		SettleBall();
+	}
 }

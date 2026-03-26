@@ -61,6 +61,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ball")
 	float KillZ;
 
+	/** Maximum time this ball stays alive before being forcibly settled and destroyed. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ball")
+	float MaxLifespan;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -72,6 +76,10 @@ private:
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	           FVector NormalImpulse, const FHitResult& Hit);
 
+	/** Called when lifespan expires. */
+	UFUNCTION()
+	void OnLifespanExpired();
+
 	/** Finalize score and destroy the ball. */
 	void SettleBall();
 
@@ -79,4 +87,5 @@ private:
 	float AccumulatedMultiplier;
 	float SettleTimer;
 	bool bHasSettled;
+	FTimerHandle LifespanTimerHandle;
 };

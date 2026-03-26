@@ -124,5 +124,4 @@ private:
 	EGamePhase CurrentPhase;
 	int32 CurrentRound;
 	FOpponentData CurrentOpponent;
-	FTimerHandle DropPhaseTimerHandle;
 };

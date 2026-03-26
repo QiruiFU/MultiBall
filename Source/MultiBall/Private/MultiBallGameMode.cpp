@@ -140,11 +140,6 @@ void AMultiBallGameMode::EnterDropPhase()
 		BallEmitter->StartDropSequence(TotalBalls);
 	}
 
-	// Start Drop phase timeout timer
-	GetWorld()->GetTimerManager().ClearTimer(DropPhaseTimerHandle);
-	GetWorld()->GetTimerManager().SetTimer(DropPhaseTimerHandle, this,
-		&AMultiBallGameMode::OnAllBallsFinished, DropPhaseDuration, false);
-
 	OnPhaseChanged.Broadcast(CurrentPhase);
 }
 
@@ -259,10 +254,7 @@ void AMultiBallGameMode::OnAllBallsFinished()
 {
 	if (CurrentPhase == EGamePhase::Drop)
 	{
-		// Clear timer to prevent double-transition
-		GetWorld()->GetTimerManager().ClearTimer(DropPhaseTimerHandle);
-
-		UE_LOG(LogTemp, Log, TEXT("GameMode: All balls settled / timeout. Transitioning to Rewards."));
+		UE_LOG(LogTemp, Log, TEXT("GameMode: All balls settled / destroyed. Transitioning to Rewards."));
 		EnterRewardsPhase();
 	}
 }
@@ -284,12 +276,11 @@ void AMultiBallGameMode::CheatWinRound()
 		ScoreSys->AddBallScore(CurrentOpponent.TargetScore + 1, 1.0f);
 	}
 
-	// Stop balls and clear timer
+	// Stop balls
 	if (BallEmitter)
 	{
 		BallEmitter->StopDropSequence();
 	}
-	GetWorld()->GetTimerManager().ClearTimer(DropPhaseTimerHandle);
 
 	EnterRewardsPhase();
 }
