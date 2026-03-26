@@ -22,12 +22,9 @@ public:
 
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
-	virtual void NativeConstruct() override;
-	virtual void NativeDestruct() override;
 
 private:
 	TSharedPtr<STextBlock> RemainingText;
 
-	UFUNCTION()
-	void UpdateRemainingBallsText(int32 BallsRemaining);
+	FText GetBallsText() const;
 };

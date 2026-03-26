@@ -6,6 +6,8 @@
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Layout/SBorder.h"
 #include "BallEmitterActor.h"
+#include "MultiBallGameMode.h"
+#include "SpecialSkillSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 
 URemainingBallsWidget::URemainingBallsWidget(const FObjectInitializer& ObjectInitializer)
@@ -25,53 +27,32 @@ TSharedRef<SWidget> URemainingBallsWidget::RebuildWidget()
 			.Padding(FMargin(30.0f, 15.0f))
 			[
 				SAssignNew(RemainingText, STextBlock)
-				.Text(FText::FromString(TEXT("Balls: 0")))
+				.Text_UObject(this, &URemainingBallsWidget::GetBallsText)
 				.Font(FSlateFontInfo(FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Bold.ttf"), 36))
 				.ColorAndOpacity(FSlateColor(FLinearColor::White))
 			]
 		];
 }
 
-void URemainingBallsWidget::NativeConstruct()
+FText URemainingBallsWidget::GetBallsText() const
 {
-	Super::NativeConstruct();
+	AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(GetWorld()->GetAuthGameMode());
+	if (!GM) return FText::FromString("Balls: ?");
 
-	// Find the ball emitter in the level and bind to its event
-	ABallEmitterActor* Emitter = Cast<ABallEmitterActor>(
-		UGameplayStatics::GetActorOfClass(GetWorld(), ABallEmitterActor::StaticClass()));
-
-	if (Emitter)
+	if (GM->GetCurrentPhase() == EGamePhase::Drop)
 	{
-		Emitter->OnBallsRemainingChanged.AddDynamic(this, &URemainingBallsWidget::UpdateRemainingBallsText);
-		
-		// Initialize the text immediately
-		UpdateRemainingBallsText(Emitter->GetBallsRemaining());
+		ABallEmitterActor* Emitter = GM->BallEmitter;
+		int32 Count = Emitter ? Emitter->GetBallsRemaining() : 0;
+		return FText::FromString(FString::Printf(TEXT("Balls: %d"), Count));
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("RemainingBallsWidget: Could not find BallEmitterActor in the level."));
-	}
-}
-
-void URemainingBallsWidget::NativeDestruct()
-{
-	// Clean up binding if necessary (AddDynamic usually cleans up automatically on destruction,
-	// but it's good practice to be mindful if the UI is destroyed before the emitter)
-	ABallEmitterActor* Emitter = Cast<ABallEmitterActor>(
-		UGameplayStatics::GetActorOfClass(GetWorld(), ABallEmitterActor::StaticClass()));
-
-	if (Emitter)
-	{
-		Emitter->OnBallsRemainingChanged.RemoveDynamic(this, &URemainingBallsWidget::UpdateRemainingBallsText);
-	}
-
-	Super::NativeDestruct();
-}
-
-void URemainingBallsWidget::UpdateRemainingBallsText(int32 BallsRemaining)
-{
-	if (RemainingText.IsValid())
-	{
-		RemainingText->SetText(FText::FromString(FString::Printf(TEXT("Balls: %d"), BallsRemaining)));
+		ABallEmitterActor* Emitter = GM->BallEmitter;
+		int32 BaseBalls = Emitter ? Emitter->BallsPerRound : 5;
+		
+		USpecialSkillSubsystem* SkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
+		int32 ExtraBalls = SkillSys ? SkillSys->GetExtraBalls() : 0;
+		
+		return FText::FromString(FString::Printf(TEXT("Balls: %d"), BaseBalls + ExtraBalls));
 	}
 }

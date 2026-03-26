@@ -113,6 +113,16 @@ void AMultiBallPlayerController::BeginPlay()
         }
     }
 
+    // Create remaining balls widget permanently
+    if (IsLocalController() && !RemainingBallsWidgetInstance)
+    {
+        RemainingBallsWidgetInstance = CreateWidget<URemainingBallsWidget>(this, URemainingBallsWidget::StaticClass());
+        if (RemainingBallsWidgetInstance)
+        {
+            RemainingBallsWidgetInstance->AddToViewport();
+        }
+    }
+
     // Trigger initial phase AFTER all widgets are created
     if (GM)
     {
@@ -321,14 +331,7 @@ void AMultiBallPlayerController::HandlePhaseChanged(EGamePhase NewPhase)
     }
     else if (NewPhase == EGamePhase::Drop)
     {
-        if (IsLocalController() && !RemainingBallsWidgetInstance)
-        {
-            RemainingBallsWidgetInstance = CreateWidget<URemainingBallsWidget>(this, URemainingBallsWidget::StaticClass());
-            if (RemainingBallsWidgetInstance)
-            {
-                RemainingBallsWidgetInstance->AddToViewport();
-            }
-        }
+        // RemainingBallsWidget is now initialized in BeginPlay
     }
     else
     {
@@ -339,12 +342,6 @@ void AMultiBallPlayerController::HandlePhaseChanged(EGamePhase NewPhase)
         {
             BuildWidget->RemoveFromParent();
             BuildWidget = nullptr;
-        }
-
-        if (RemainingBallsWidgetInstance)
-        {
-            RemainingBallsWidgetInstance->RemoveFromParent();
-            RemainingBallsWidgetInstance = nullptr;
         }
     }
 
