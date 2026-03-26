@@ -18,9 +18,9 @@ public:
 
 	// --- Score helpers (for WBP_ShopUI binding) ---
 
-	/** Returns the current round's accumulated score data (Chips + Multiplier). */
+	/** Returns the current round's accumulated score data. */
 	UFUNCTION(BlueprintPure, Category = "MultiBall|Score", meta = (WorldContext = "WorldContextObject"))
-	static FScoreData GetCurrentRoundScore(const UObject* WorldContextObject);
+	static int64 GetCurrentRoundScore(const UObject* WorldContextObject);
 
 	/** Returns the current round's total score as formatted text (e.g. "1,234"). */
 	UFUNCTION(BlueprintPure, Category = "MultiBall|Score", meta = (WorldContext = "WorldContextObject"))

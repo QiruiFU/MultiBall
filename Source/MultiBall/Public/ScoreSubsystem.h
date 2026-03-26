@@ -7,7 +7,7 @@
 #include "MultiBallTypes.h"
 #include "ScoreSubsystem.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRoundScoreUpdated, FScoreData, NewScore);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRoundScoreUpdated, int64, NewScore);
 
 /**
  * World subsystem that accumulates per-round scoring
@@ -19,13 +19,13 @@ class MULTIBALL_API UScoreSubsystem : public UWorldSubsystem
 	GENERATED_BODY()
 
 public:
-	/** Add a single ball's finalised score to the round total. */
+	/** Add a single collision's score to the round total. */
 	UFUNCTION(BlueprintCallable, Category = "Score")
-	void AddBallScore(int32 Chips, float Multiplier);
+	void AddScore(int32 Chips, float Multiplier);
 
 	/** Get the current round score data. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Score")
-	FScoreData GetRoundScore() const;
+	int64 GetRoundScore() const;
 
 	/** Reset the round score for a new round. */
 	UFUNCTION(BlueprintCallable, Category = "Score")
@@ -44,5 +44,5 @@ public:
 	FOnRoundScoreUpdated OnRoundScoreUpdated;
 
 private:
-	FScoreData RoundScore;
+	int64 RoundScore;
 };

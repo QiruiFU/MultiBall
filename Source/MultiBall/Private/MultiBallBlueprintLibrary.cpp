@@ -11,17 +11,17 @@ FVector UMultiBallBlueprintLibrary::GetLocationFromHitResult(const FHitResult& H
 	return HitResult.Location;
 }
 
-FScoreData UMultiBallBlueprintLibrary::GetCurrentRoundScore(const UObject* WorldContextObject)
+int64 UMultiBallBlueprintLibrary::GetCurrentRoundScore(const UObject* WorldContextObject)
 {
 	if (!WorldContextObject)
 	{
-		return FScoreData();
+		return 0;
 	}
 
 	UWorld* World = WorldContextObject->GetWorld();
 	if (!World)
 	{
-		return FScoreData();
+		return 0;
 	}
 
 	UScoreSubsystem* ScoreSys = World->GetSubsystem<UScoreSubsystem>();
@@ -29,13 +29,12 @@ FScoreData UMultiBallBlueprintLibrary::GetCurrentRoundScore(const UObject* World
 	{
 		return ScoreSys->GetRoundScore();
 	}
-	return FScoreData();
+	return 0;
 }
 
 FText UMultiBallBlueprintLibrary::GetTotalScoreFormatted(const UObject* WorldContextObject)
 {
-	FScoreData Score = GetCurrentRoundScore(WorldContextObject);
-	int64 Total = Score.GetTotalScore();
+	int64 Total = GetCurrentRoundScore(WorldContextObject);
 	return FText::AsNumber(Total);
 }
 

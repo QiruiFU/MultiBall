@@ -28,12 +28,7 @@ public:
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Economy")
 	int32 PlayerCoins;
 
-	/** Score data for the current round. */
-	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Score")
-	int32 RoundChips;
 
-	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Score")
-	float RoundMultiplier;
 
 	/** Cumulative total score across all rounds. */
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Score")

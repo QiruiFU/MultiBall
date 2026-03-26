@@ -33,7 +33,7 @@ ABallActor::ABallActor()
 	}
 
 	// Scoring defaults
-	BaseChips = 10;
+	BaseChips = 5;
 	BaseMultiplier = 1.0f;
 	CollisionCooldown = 0.1f;
 	AccumulatedChips = 0;
@@ -147,6 +147,13 @@ void ABallActor::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 
 		Placeable->OnBallHit(this);
 
+		// NEW mechanism: Add points to ScoreSubsystem IMMEDIATELY
+		UScoreSubsystem* ScoreSys = GetWorld()->GetSubsystem<UScoreSubsystem>();
+		if (ScoreSys)
+		{
+			ScoreSys->AddScore(AccumulatedChips, AccumulatedMultiplier);
+		}
+
 		// SplitChance: chance to spawn an extra ball on peg hit
 		USpecialSkillSubsystem* SkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
 		if (SkillSys)
@@ -205,13 +212,6 @@ void ABallActor::SettleBall()
 
 	// Broadcast score finalized
 	OnBallScoreFinalized.Broadcast(AccumulatedChips, AccumulatedMultiplier);
-
-	// Add to round score via subsystem
-	UScoreSubsystem* ScoreSys = GetWorld()->GetSubsystem<UScoreSubsystem>();
-	if (ScoreSys)
-	{
-		ScoreSys->AddBallScore(AccumulatedChips, AccumulatedMultiplier);
-	}
 
 	// Destroy after a short delay for visual feedback
 	SetLifeSpan(0.5f);

@@ -152,11 +152,11 @@ void AMultiBallGameMode::EnterRewardsPhase()
 	bool bPlayerWon = false;
 	if (ScoreSys)
 	{
-		FScoreData RoundScore = ScoreSys->GetRoundScore();
+		int64 FinalScore = ScoreSys->GetFinalCalculatedScore();
 		bPlayerWon = ScoreSys->DidPlayerWin(CurrentOpponent.TargetScore);
 
 		UE_LOG(LogTemp, Log, TEXT("GameMode: Player scored %lld vs opponent target %lld — %s!"),
-		       RoundScore.GetTotalScore(), CurrentOpponent.TargetScore,
+		       FinalScore, CurrentOpponent.TargetScore,
 		       bPlayerWon ? TEXT("WIN") : TEXT("LOSE"));
 	}
 
@@ -273,7 +273,7 @@ void AMultiBallGameMode::CheatWinRound()
 	UScoreSubsystem* ScoreSys = GetWorld()->GetSubsystem<UScoreSubsystem>();
 	if (ScoreSys)
 	{
-		ScoreSys->AddBallScore(CurrentOpponent.TargetScore + 1, 1.0f);
+		ScoreSys->AddScore(static_cast<int32>(CurrentOpponent.TargetScore + 1), 1.0f);
 	}
 
 	// Stop balls
