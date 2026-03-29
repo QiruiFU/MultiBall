@@ -4,6 +4,7 @@
 #include "MultiBallPlayerState.h"
 #include "MultiBallGameMode.h"
 #include "PlaceableActor.h"
+#include "FlipperActor.h"
 #include "Engine/World.h"
 #include "Blueprint/UserWidget.h"
 #include "PegActor.h"
@@ -26,6 +27,7 @@
 AMultiBallPlayerController::AMultiBallPlayerController()
 {
     bShowMouseCursor = true;
+    bGhostFlipped = false;
     bEnableClickEvents = true;
     BuildWidget = nullptr;
     GhostPreviewActor = nullptr;
@@ -145,6 +147,9 @@ void AMultiBallPlayerController::SetupInputComponent()
     InputComponent->BindKey(EKeys::One, IE_Pressed, this, &AMultiBallPlayerController::DebugEnterShop);
     InputComponent->BindKey(EKeys::Two, IE_Pressed, this, &AMultiBallPlayerController::DebugEnterDrop);
     InputComponent->BindKey(EKeys::P, IE_Pressed, this, &AMultiBallPlayerController::DebugCheatWin);
+
+    // R = Flip/mirror the ghost preview (for flippers, etc.)
+    InputComponent->BindKey(EKeys::R, IE_Pressed, this, &AMultiBallPlayerController::HandleFlipPressed);
 }
 
 void AMultiBallPlayerController::HandleSpacebarPressed()
@@ -166,6 +171,7 @@ void AMultiBallPlayerController::Tick(float DeltaTime)
 void AMultiBallPlayerController::SelectPlaceable(TSubclassOf<APlaceableActor> PlaceableClass)
 {
     SelectedPlaceableClass = PlaceableClass;
+    bGhostFlipped = false;
     UE_LOG(LogTemp, Log, TEXT("Selected placeable: %s"), *GetNameSafe(PlaceableClass));
 
     // Refresh ghost if in Shop phase
@@ -286,7 +292,13 @@ void AMultiBallPlayerController::PurchasePlaceable_Implementation(TSubclassOf<AP
             FActorSpawnParameters SpawnParams;
             SpawnParams.Owner = this;
 
-            GetWorld()->SpawnActor<APlaceableActor>(PlaceableClass, Location + Offset, FRotationMatrix::MakeFromZ(Offset.GetSafeNormal()).Rotator(), SpawnParams);
+            APlaceableActor* SpawnedActor = GetWorld()->SpawnActor<APlaceableActor>(PlaceableClass, Location + Offset, FRotationMatrix::MakeFromZ(Offset.GetSafeNormal()).Rotator(), SpawnParams);
+
+            // Apply flip state if it's a flipper
+            if (AFlipperActor* Flipper = Cast<AFlipperActor>(SpawnedActor))
+            {
+                Flipper->SetFlipped(bGhostFlipped);
+            }
         }
     }
 }
@@ -325,6 +337,20 @@ void AMultiBallPlayerController::DebugCheatWin()
         ShowNotification(TEXT("!!! CHEAT: INSTANT WIN !!!"), 3.0f, FLinearColor::Red);
         GM->CheatWinRound();
     }
+}
+
+void AMultiBallPlayerController::HandleFlipPressed()
+{
+    if (!GhostPreviewActor) return;
+
+    // Only flip if the selected placeable is a flipper type
+    AFlipperActor* GhostFlipper = Cast<AFlipperActor>(GhostPreviewActor);
+    if (!GhostFlipper) return;
+
+    bGhostFlipped = !bGhostFlipped;
+    GhostFlipper->SetFlipped(bGhostFlipped);
+
+    UE_LOG(LogTemp, Log, TEXT("Ghost flip toggled: %s"), bGhostFlipped ? TEXT("Flipped") : TEXT("Normal"));
 }
 
 void AMultiBallPlayerController::HandlePhaseChanged(EGamePhase NewPhase)
@@ -485,6 +511,17 @@ void AMultiBallPlayerController::UpdateGhostPreview()
     {
         GhostPreviewActor->SetActorLocation(BoardHit->Location);
         GhostPreviewActor->SetActorRotation(FRotationMatrix::MakeFromZ(BoardHit->Normal).Rotator());
+
+        // Sync flipper's base rotation and apply its rest angle directly
+        // (FlipperActor::Tick won't apply rotation when already at rest)
+        if (AFlipperActor* GhostFlipper = Cast<AFlipperActor>(GhostPreviewActor))
+        {
+            GhostFlipper->BaseSpawnRotation = GhostPreviewActor->GetActorQuat();
+            float RestAngle = bGhostFlipped ? -GhostFlipper->MinAngle : GhostFlipper->MinAngle;
+            FQuat FinalRot = GhostFlipper->BaseSpawnRotation * FQuat(FRotator(0.f, RestAngle, 0.f));
+            GhostPreviewActor->SetActorRotation(FinalRot);
+        }
+
         FVector SnapLocation = GhostPreviewActor->GetActorLocation() + GhostPreviewActor->GetActorUpVector() * 30;
         GhostPreviewActor->SetActorLocation(SnapLocation);
         GhostPreviewActor->SetActorHiddenInGame(false);

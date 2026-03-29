@@ -5,6 +5,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 AFlipperActor::AFlipperActor()
 {
@@ -16,6 +17,7 @@ AFlipperActor::AFlipperActor()
 	MinAngle = -20.0f;
 	MaxAngle = 30.0f;
 	FlapSpeed = 1000.0f; // Very fast rotation
+	bIsFlipped = false;
 
 	CurrentAngle = MinAngle;
 	TargetAngle = MinAngle;
@@ -38,9 +40,12 @@ void AFlipperActor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Apply the flip state (may have been set before spawn)
+	ApplyFlipVisual();
+
 	BaseSpawnRotation = GetActorQuat();
-	CurrentAngle = MinAngle;
-	TargetAngle = MinAngle;
+	CurrentAngle = bIsFlipped ? -MinAngle : MinAngle;
+	TargetAngle = CurrentAngle;
 
 	// Initial rotation applied directly to the root component around the local Z (Yaw) axis
 	FQuat InitialRot = BaseSpawnRotation * FQuat(FRotator(0.f, CurrentAngle, 0.f));
@@ -55,6 +60,12 @@ void AFlipperActor::BeginPlay()
 	{
 		PC->OnSpacebarAction.AddDynamic(this, &AFlipperActor::OnSpacebarChanged);
 	}
+}
+
+void AFlipperActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AFlipperActor, bIsFlipped);
 }
 
 void AFlipperActor::Tick(float DeltaTime)
@@ -76,12 +87,49 @@ void AFlipperActor::Tick(float DeltaTime)
 
 void AFlipperActor::OnSpacebarChanged(bool bIsPressed)
 {
+	float EffectiveMin = bIsFlipped ? -MinAngle : MinAngle;
+	float EffectiveMax = bIsFlipped ? -MaxAngle : MaxAngle;
+
 	if (bIsPressed)
 	{
-		TargetAngle = MaxAngle;
+		TargetAngle = EffectiveMax;
 	}
 	else
 	{
-		TargetAngle = MinAngle;
+		TargetAngle = EffectiveMin;
 	}
 }
+
+void AFlipperActor::SetFlipped(bool bFlipped)
+{
+	bIsFlipped = bFlipped;
+	ApplyFlipVisual();
+
+	// Re-apply rotation if we've already started (BaseSpawnRotation is set in BeginPlay)
+	if (HasActorBegunPlay())
+	{
+		float EffectiveMin = bIsFlipped ? -MinAngle : MinAngle;
+		CurrentAngle = EffectiveMin;
+		TargetAngle = EffectiveMin;
+
+		FQuat NewRot = BaseSpawnRotation * FQuat(FRotator(0.f, CurrentAngle, 0.f));
+		if (CollisionComponent)
+		{
+			CollisionComponent->SetWorldRotation(NewRot);
+		}
+	}
+}
+
+void AFlipperActor::ApplyFlipVisual()
+{
+	if (MeshComponent)
+	{
+		FVector CurrentLoc = MeshComponent->GetRelativeLocation();
+
+		// Mirror the X offset so the arm extends the other direction
+		float AbsX = FMath::Abs(CurrentLoc.X);
+		CurrentLoc.X = bIsFlipped ? -AbsX : AbsX;
+		MeshComponent->SetRelativeLocation(CurrentLoc);
+	}
+}
+

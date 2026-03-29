@@ -79,6 +79,12 @@ private:
     void DebugEnterDrop();
     void DebugCheatWin();
 
+    /** Toggle flip direction of the ghost preview (R key). */
+    void HandleFlipPressed();
+
+    /** Whether the ghost preview is currently flipped. */
+    bool bGhostFlipped;
+
     UPROPERTY()
     UUserWidget* BuildWidget;
 

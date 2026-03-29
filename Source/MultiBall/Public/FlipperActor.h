@@ -29,8 +29,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Flipper")
 	float FlapSpeed;
 
+	/** Whether this flipper is mirrored (faces the other direction). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Flipper")
+	bool bIsFlipped;
+
+	/** Apply or remove the horizontal flip. */
+	UFUNCTION(BlueprintCallable, Category = "Flipper")
+	void SetFlipped(bool bFlipped);
+
 protected:
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
 	virtual void Tick(float DeltaTime) override;
@@ -42,5 +51,13 @@ public:
 private:
 	float CurrentAngle;
 	float TargetAngle;
+
+public:
+	/** The rotation at spawn time (or updated by ghost preview). */
 	FQuat BaseSpawnRotation;
+
+private:
+
+	/** Internal helper to apply/remove visual mirror on the mesh. */
+	void ApplyFlipVisual();
 };
