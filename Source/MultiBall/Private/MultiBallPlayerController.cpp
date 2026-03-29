@@ -225,6 +225,10 @@ void AMultiBallPlayerController::HandlePlacementClick()
         TArray<FHitResult> HitResults;
         FCollisionQueryParams Params;
         Params.AddIgnoredActor(GetPawn());
+        if (GhostPreviewActor)
+        {
+            Params.AddIgnoredActor(GhostPreviewActor);
+        }
 
         if (GetWorld()->LineTraceMultiByChannel(HitResults, WorldLocation, WorldLocation + (WorldDirection * 10000.0f), ECC_Visibility, Params))
         {
@@ -458,7 +462,6 @@ void AMultiBallPlayerController::UpdateGhostPreview()
     FVector WorldLocation, WorldDirection;
     if (!DeprojectMousePositionToWorld(WorldLocation, WorldDirection)) return;
 
-    FHitResult HitResult;
     FCollisionQueryParams Params;
     Params.AddIgnoredActor(GetPawn());
     Params.AddIgnoredActor(GhostPreviewActor);

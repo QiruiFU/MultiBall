@@ -24,7 +24,8 @@ APlaceableActor::APlaceableActor()
 	PlacementBlockingRadius->InitSphereRadius(60.0f);
 	PlacementBlockingRadius->SetCollisionProfileName(TEXT("QueryOnly"));
 	PlacementBlockingRadius->SetCollisionResponseToAllChannels(ECR_Ignore);
-	PlacementBlockingRadius->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	PlacementBlockingRadius->SetCollisionResponseToChannel(ECC_Visibility, ECR_Overlap);
+	PlacementBlockingRadius->SetGenerateOverlapEvents(true);
 	PlacementBlockingRadius->SetupAttachment(CollisionComponent);
 
 	// Visual mesh — default cylinder
