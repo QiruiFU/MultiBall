@@ -46,6 +46,8 @@ APlaceableActor::APlaceableActor()
 	MaxDurability = 0; // 0 = indestructible
 	CurrentDurability = 0;
 	bIsBroken = false;
+	bIsFixed = false;
+	FixedForRound = 0;
 
 	
 	TSubclassOf<UUFloatingScoreWidget> WidgetClass = StaticLoadClass(UUFloatingScoreWidget::StaticClass(), nullptr, TEXT("/Game/UI/WBP_FloatingScoreHolder.WBP_FloatingScoreHolder_C"));

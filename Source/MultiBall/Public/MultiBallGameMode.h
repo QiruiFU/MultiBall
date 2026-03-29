@@ -12,6 +12,8 @@ class UShopComponent;
 class UOpponentDataAsset;
 class ABoardActor;
 class USpecialSkillSubsystem;
+class UBoardLayoutDataAsset;
+class APlaceableActor;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPhaseChanged, EGamePhase, NewPhase);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRoundComplete, int32, Round, bool, bPlayerWon);
@@ -78,6 +80,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Loop")
 	UOpponentDataAsset* OpponentRoster;
 
+	/** Board layout data asset defining fixed components per round. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Loop")
+	UBoardLayoutDataAsset* BoardLayoutAsset;
+
 	/** Reference to the board actor in the level. Auto-found if not set. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Loop")
 	ABoardActor* BoardActor;
@@ -121,7 +127,30 @@ private:
 	UFUNCTION()
 	void OnAllBallsFinished();
 
+	/** Spawn fixed layout components for the given round (from DataAsset). */
+	void SpawnFixedLayout(int32 Round);
+
+	/** Destroy all DataAsset-spawned fixed layout components. */
+	void ClearFixedLayout();
+
+	/** Collect all editor-placed fixed actors at startup. */
+	void CollectEditorPlacedFixedActors();
+
+	/** Show/activate editor-placed actors tagged for the given round, hide all others. */
+	void ActivateFixedActorsForRound(int32 Round);
+
+	/** Hide/deactivate all editor-placed fixed actors. */
+	void DeactivateAllFixedActors();
+
 	EGamePhase CurrentPhase;
 	int32 CurrentRound;
 	FOpponentData CurrentOpponent;
+
+	/** Tracks all actors spawned by the DataAsset fixed layout system. */
+	UPROPERTY()
+	TArray<APlaceableActor*> FixedPlaceables;
+
+	/** All editor-placed actors with FixedForRound > 0, collected at BeginPlay. */
+	UPROPERTY()
+	TArray<APlaceableActor*> EditorPlacedFixedActors;
 };

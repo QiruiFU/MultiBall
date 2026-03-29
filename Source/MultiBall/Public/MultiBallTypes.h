@@ -125,3 +125,41 @@ struct FInventoryEntry
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	int32 Count = 0;
 };
+
+/** A single pre-placed component entry for a fixed board layout. */
+USTRUCT(BlueprintType)
+struct FFixedPlacementEntry
+{
+	GENERATED_BODY()
+
+	/** The placeable class to spawn. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Layout")
+	TSubclassOf<APlaceableActor> PlaceableClass;
+
+	/** Position relative to the BoardActor origin. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Layout")
+	FVector RelativeLocation = FVector::ZeroVector;
+
+	/** Rotation relative to the BoardActor. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Layout")
+	FRotator RelativeRotation = FRotator::ZeroRotator;
+
+	/** Whether this item is flipped (for flippers). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Layout")
+	bool bIsFlipped = false;
+};
+
+/** Layout defining all fixed components for a single round. */
+USTRUCT(BlueprintType)
+struct FRoundLayout
+{
+	GENERATED_BODY()
+
+	/** Human-readable name for this layout (editor only). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Layout")
+	FText LayoutName;
+
+	/** All fixed placements for this round. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Layout")
+	TArray<FFixedPlacementEntry> FixedPlacements;
+};

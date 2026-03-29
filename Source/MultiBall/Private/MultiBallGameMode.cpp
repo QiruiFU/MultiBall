@@ -8,6 +8,9 @@
 #include "ScoreSubsystem.h"
 #include "OpponentDataAsset.h"
 #include "BoardActor.h"
+#include "BoardLayoutDataAsset.h"
+#include "PlaceableActor.h"
+#include "FlipperActor.h"
 #include "BoardCameraPawn.h"
 #include "SpecialSkillSubsystem.h"
 #include "Kismet/GameplayStatics.h"
@@ -103,6 +106,9 @@ void AMultiBallGameMode::BeginPlay()
 		BallEmitter->OnAllBallsFinished.AddDynamic(this, &AMultiBallGameMode::OnAllBallsFinished);
 	}
 
+	// Collect and hide all editor-placed fixed actors
+	CollectEditorPlacedFixedActors();
+
 	// Start the game
 	EnterShopPhase();
 }
@@ -111,6 +117,19 @@ void AMultiBallGameMode::EnterShopPhase()
 {
 	CurrentPhase = EGamePhase::Shop;
 	UE_LOG(LogTemp, Log, TEXT("GameMode: === SHOP PHASE (Round %d) ==="), CurrentRound);
+
+	// Clear leftover balls from previous round
+	if (BallEmitter)
+	{
+		BallEmitter->ClearAllBalls();
+	}
+
+	// Clear previous fixed layout and spawn new one (DataAsset path)
+	ClearFixedLayout();
+	SpawnFixedLayout(CurrentRound);
+
+	// Activate editor-placed fixed actors for this round
+	ActivateFixedActorsForRound(CurrentRound);
 
 	if (ShopComponent)
 	{
@@ -283,4 +302,135 @@ void AMultiBallGameMode::CheatWinRound()
 	}
 
 	EnterRewardsPhase();
+}
+
+void AMultiBallGameMode::SpawnFixedLayout(int32 Round)
+{
+	if (!BoardLayoutAsset || !BoardActor)
+	{
+		return;
+	}
+
+	int32 LayoutIndex = Round - 1; // Round is 1-based, array is 0-based
+	if (!BoardLayoutAsset->RoundLayouts.IsValidIndex(LayoutIndex))
+	{
+		UE_LOG(LogTemp, Log, TEXT("GameMode: No fixed layout defined for round %d."), Round);
+		return;
+	}
+
+	const FRoundLayout& Layout = BoardLayoutAsset->RoundLayouts[LayoutIndex];
+	FVector BoardOrigin = BoardActor->GetActorLocation();
+	FRotator BoardRotation = BoardActor->GetActorRotation();
+
+	for (const FFixedPlacementEntry& Entry : Layout.FixedPlacements)
+	{
+		if (!Entry.PlaceableClass) continue;
+
+		FVector SpawnLocation = BoardOrigin + BoardRotation.RotateVector(Entry.RelativeLocation);
+		FRotator SpawnRotation = BoardRotation + Entry.RelativeRotation;
+
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		APlaceableActor* SpawnedActor = GetWorld()->SpawnActor<APlaceableActor>(
+			Entry.PlaceableClass, SpawnLocation, SpawnRotation, SpawnParams);
+
+		if (SpawnedActor)
+		{
+			SpawnedActor->bIsFixed = true;
+
+			// Apply flip for flippers
+			if (Entry.bIsFlipped)
+			{
+				if (AFlipperActor* Flipper = Cast<AFlipperActor>(SpawnedActor))
+				{
+					Flipper->SetFlipped(true);
+				}
+			}
+
+			FixedPlaceables.Add(SpawnedActor);
+			UE_LOG(LogTemp, Log, TEXT("GameMode: Spawned fixed %s at %s"),
+			       *GetNameSafe(Entry.PlaceableClass), *SpawnLocation.ToString());
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("GameMode: Spawned %d fixed components for round %d."),
+	       FixedPlaceables.Num(), Round);
+}
+
+void AMultiBallGameMode::ClearFixedLayout()
+{
+	for (APlaceableActor* Actor : FixedPlaceables)
+	{
+		if (Actor && IsValid(Actor))
+		{
+			Actor->Destroy();
+		}
+	}
+
+	int32 Count = FixedPlaceables.Num();
+	FixedPlaceables.Empty();
+
+	if (Count > 0)
+	{
+		UE_LOG(LogTemp, Log, TEXT("GameMode: Cleared %d DataAsset fixed components."), Count);
+	}
+}
+
+void AMultiBallGameMode::CollectEditorPlacedFixedActors()
+{
+	TArray<AActor*> AllPlaceables;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlaceableActor::StaticClass(), AllPlaceables);
+
+	for (AActor* Actor : AllPlaceables)
+	{
+		APlaceableActor* Placeable = Cast<APlaceableActor>(Actor);
+		if (Placeable && Placeable->FixedForRound > 0)
+		{
+			Placeable->bIsFixed = true;
+			Placeable->SetActorHiddenInGame(true);
+			Placeable->SetActorEnableCollision(false);
+			Placeable->SetActorTickEnabled(false);
+			EditorPlacedFixedActors.Add(Placeable);
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("GameMode: Collected %d editor-placed fixed actors."), EditorPlacedFixedActors.Num());
+}
+
+void AMultiBallGameMode::ActivateFixedActorsForRound(int32 Round)
+{
+	int32 ActivatedCount = 0;
+	for (APlaceableActor* Actor : EditorPlacedFixedActors)
+	{
+		if (!Actor || !IsValid(Actor)) continue;
+
+		bool bShouldBeActive = (Actor->FixedForRound == Round);
+		Actor->SetActorHiddenInGame(!bShouldBeActive);
+		Actor->SetActorEnableCollision(bShouldBeActive);
+		Actor->SetActorTickEnabled(bShouldBeActive);
+
+		if (bShouldBeActive)
+		{
+			ActivatedCount++;
+		}
+	}
+
+	if (ActivatedCount > 0)
+	{
+		UE_LOG(LogTemp, Log, TEXT("GameMode: Activated %d editor-placed fixed actors for round %d."), ActivatedCount, Round);
+	}
+}
+
+void AMultiBallGameMode::DeactivateAllFixedActors()
+{
+	for (APlaceableActor* Actor : EditorPlacedFixedActors)
+	{
+		if (Actor && IsValid(Actor))
+		{
+			Actor->SetActorHiddenInGame(true);
+			Actor->SetActorEnableCollision(false);
+			Actor->SetActorTickEnabled(false);
+		}
+	}
 }

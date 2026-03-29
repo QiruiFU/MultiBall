@@ -39,6 +39,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Emitter")
 	void DropBall();
 
+	/** Destroy all active balls in the world (for round cleanup). */
+	UFUNCTION(BlueprintCallable, Category = "Emitter")
+	void ClearAllBalls();
+
 	/** Broadcast when all balls in the sequence have settled or been destroyed. */
 	UPROPERTY(BlueprintAssignable, Category = "Emitter")
 	FOnAllBallsFinished OnAllBallsFinished;

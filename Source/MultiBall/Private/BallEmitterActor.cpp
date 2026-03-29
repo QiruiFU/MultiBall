@@ -5,6 +5,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Kismet/GameplayStatics.h"
 
 ABallEmitterActor::ABallEmitterActor()
 {
@@ -151,4 +152,24 @@ void ABallEmitterActor::OnBallDestroyed(AActor* DestroyedActor)
 		UE_LOG(LogTemp, Log, TEXT("Emitter: All balls finished!"));
 		OnAllBallsFinished.Broadcast();
 	}
+}
+
+void ABallEmitterActor::ClearAllBalls()
+{
+	TArray<AActor*> FoundBalls;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABallActor::StaticClass(), FoundBalls);
+
+	for (AActor* Ball : FoundBalls)
+	{
+		if (Ball && IsValid(Ball))
+		{
+			Ball->Destroy();
+		}
+	}
+
+	ActiveBallCount = 0;
+	BallsRemaining = 0;
+	bIsDropping = false;
+
+	UE_LOG(LogTemp, Log, TEXT("Emitter: Cleared %d leftover balls."), FoundBalls.Num());
 }

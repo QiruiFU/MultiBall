@@ -12,6 +12,13 @@ public class MultiBall : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "UMG", "Slate", "SlateCore" });
 		
+		if (Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.AddRange(new string[] {
+				"UnrealEd", "WorkspaceMenuStructure", "PropertyEditor", "EditorStyle"
+			});
+		}
+
 		// Uncomment if you are using online features
 		// PrivateDependencyModuleNames.Add("OnlineSubsystem");
 
