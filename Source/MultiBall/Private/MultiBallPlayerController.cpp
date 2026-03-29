@@ -9,7 +9,9 @@
 #include "PegActor.h"
 #include "GameFramework/Pawn.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SphereComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Engine/OverlapResult.h"
 #include "NotificationWidget.h"
 #include "PhaseButtonWidget.h"
 #include "SpecialSkillWidget.h"
@@ -220,15 +222,34 @@ void AMultiBallPlayerController::HandlePlacementClick()
     FVector WorldLocation, WorldDirection;
     if (DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
     {
-        FHitResult HitResult;
+        TArray<FHitResult> HitResults;
         FCollisionQueryParams Params;
         Params.AddIgnoredActor(GetPawn());
 
-        if (GetWorld()->LineTraceSingleByChannel(HitResult, WorldLocation, WorldLocation + (WorldDirection * 10000.0f), ECC_Visibility, Params))
+        if (GetWorld()->LineTraceMultiByChannel(HitResults, WorldLocation, WorldLocation + (WorldDirection * 10000.0f), ECC_Visibility, Params))
         {
-            if (Cast<ABoardActor>(HitResult.GetActor()))
+            const FHitResult* BoardHit = nullptr;
+            for (const FHitResult& Hit : HitResults)
             {
-                PurchasePlaceable(SelectedPlaceableClass, HitResult.Location, HitResult.Normal * 30);
+                if (Cast<ABoardActor>(Hit.GetActor()))
+                {
+                    BoardHit = &Hit;
+                    break;
+                }
+            }
+
+            if (BoardHit)
+            {
+                FVector Offset = BoardHit->Normal * 30.0f;
+                FVector TargetLocation = BoardHit->Location + Offset;
+
+                if (!IsPlacementValid(TargetLocation))
+                {
+                    ShowNotification(TEXT("Too close to another item!"), 1.0f, FLinearColor::Red);
+                    return;
+                }
+
+                PurchasePlaceable(SelectedPlaceableClass, BoardHit->Location, Offset);
 
                 // If inventory is now empty for this class, remove ghost
                 if (PS->GetInventoryCount(SelectedPlaceableClass) <= 0)
@@ -396,19 +417,23 @@ void AMultiBallPlayerController::SpawnGhostPreview()
     GhostPreviewActor->SetActorEnableCollision(false);
     GhostPreviewActor->SetActorHiddenInGame(true); // hidden until first mouse hit
 
-    // Make translucent
+    // Collect meshes and override materials with a known engine material
+    GhostMaterials.Empty();
+    UMaterialInterface* BaseMat = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
+    
     TArray<UStaticMeshComponent*> Meshes;
     GhostPreviewActor->GetComponents<UStaticMeshComponent>(Meshes);
     for (UStaticMeshComponent* Mesh : Meshes)
     {
-        if (Mesh)
+        if (Mesh && BaseMat)
         {
             for (int32 i = 0; i < Mesh->GetNumMaterials(); i++)
             {
-                UMaterialInstanceDynamic* DynMat = Mesh->CreateAndSetMaterialInstanceDynamic(i);
+                UMaterialInstanceDynamic* DynMat = UMaterialInstanceDynamic::Create(BaseMat, Mesh);
                 if (DynMat)
                 {
-                    DynMat->SetScalarParameterValue(TEXT("Opacity"), 0.4f);
+                    Mesh->SetMaterial(i, DynMat);
+                    GhostMaterials.Add(DynMat);
                 }
             }
             Mesh->SetRenderCustomDepth(true);
@@ -423,6 +448,7 @@ void AMultiBallPlayerController::DestroyGhostPreview()
         GhostPreviewActor->Destroy();
         GhostPreviewActor = nullptr;
     }
+    GhostMaterials.Empty();
 }
 
 void AMultiBallPlayerController::UpdateGhostPreview()
@@ -437,21 +463,90 @@ void AMultiBallPlayerController::UpdateGhostPreview()
     Params.AddIgnoredActor(GetPawn());
     Params.AddIgnoredActor(GhostPreviewActor);
 
-    bool bHit = GetWorld()->LineTraceSingleByChannel(
-        HitResult, WorldLocation, WorldLocation + (WorldDirection * 10000.0f),
+    TArray<FHitResult> HitResults;
+    bool bHit = GetWorld()->LineTraceMultiByChannel(
+        HitResults, WorldLocation, WorldLocation + (WorldDirection * 10000.0f),
         ECC_Visibility, Params);
 
-    if (bHit && Cast<ABoardActor>(HitResult.GetActor()))
+    const FHitResult* BoardHit = nullptr;
+    for (const FHitResult& Hit : HitResults)
     {
-        GhostPreviewActor->SetActorLocation(HitResult.Location);
-        GhostPreviewActor->SetActorRotation(FRotationMatrix::MakeFromZ(HitResult.Normal).Rotator());
-        GhostPreviewActor->SetActorLocation(GhostPreviewActor->GetActorLocation() + GhostPreviewActor->GetActorUpVector() * 30);
+        if (Cast<ABoardActor>(Hit.GetActor()))
+        {
+            BoardHit = &Hit;
+            break;
+        }
+    }
+
+    if (BoardHit)
+    {
+        GhostPreviewActor->SetActorLocation(BoardHit->Location);
+        GhostPreviewActor->SetActorRotation(FRotationMatrix::MakeFromZ(BoardHit->Normal).Rotator());
+        FVector SnapLocation = GhostPreviewActor->GetActorLocation() + GhostPreviewActor->GetActorUpVector() * 30;
+        GhostPreviewActor->SetActorLocation(SnapLocation);
         GhostPreviewActor->SetActorHiddenInGame(false);
+
+        // Update colors based on validity with pulsing effect
+        bool bValid = IsPlacementValid(SnapLocation);
+        FLinearColor TargetColor = bValid ? FLinearColor(0.0f, 1.0f, 0.2f) : FLinearColor(1.0f, 0.1f, 0.1f);
+        
+        float TimeSec = GetWorld()->GetTimeSeconds();
+        float PulseAlpha = 0.3f + 0.3f * FMath::Sin(TimeSec * 8.0f); // Pulses rapidly
+        
+        for (UMaterialInstanceDynamic* MID : GhostMaterials)
+        {
+            if (MID)
+            {
+                MID->SetVectorParameterValue(TEXT("BaseColor"), TargetColor);
+                MID->SetVectorParameterValue(TEXT("Color"), TargetColor);
+                MID->SetVectorParameterValue(TEXT("EmissiveColor"), TargetColor * PulseAlpha * 2.5f);
+                MID->SetScalarParameterValue(TEXT("Opacity"), FMath::Clamp(PulseAlpha + 0.1f, 0.2f, 0.8f));
+            }
+        }
     }
     else
     {
         GhostPreviewActor->SetActorHiddenInGame(true);
     }
+}
+
+bool AMultiBallPlayerController::IsPlacementValid(const FVector& Location) const
+{
+    if (!GhostPreviewActor || !GhostPreviewActor->PlacementBlockingRadius)
+    {
+        return true;
+    }
+
+    float Radius = GhostPreviewActor->PlacementBlockingRadius->GetScaledSphereRadius();
+    FCollisionShape Sphere = FCollisionShape::MakeSphere(Radius * 0.9f); // Slightly smaller to be forgiving
+
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(GetPawn());
+    Params.AddIgnoredActor(GhostPreviewActor);
+
+    TArray<FOverlapResult> Overlaps;
+    bool bHit = GetWorld()->OverlapMultiByObjectType(
+        Overlaps,
+        Location,
+        FQuat::Identity,
+        FCollisionObjectQueryParams(FCollisionObjectQueryParams::AllObjects),
+        Sphere,
+        Params);
+
+    if (bHit)
+    {
+        for (const FOverlapResult& Overlap : Overlaps)
+        {
+            if (AActor* HitActor = Overlap.GetActor())
+            {
+                if (Cast<APlaceableActor>(HitActor))
+                {
+                    return false; // Cannot place overlapping another placeable item
+                }
+            }
+        }
+    }
+    return true;
 }
 
 void AMultiBallPlayerController::ShowNotification(const FString& Message, float Duration, FLinearColor Color)

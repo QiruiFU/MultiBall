@@ -93,8 +93,14 @@ private:
     /** Update ghost position to follow mouse cursor each frame. */
     void UpdateGhostPreview();
 
+    /** Check if a location is valid to place the current item. */
+    bool IsPlacementValid(const FVector& Location) const;
+
     UPROPERTY()
     APlaceableActor* GhostPreviewActor;
+
+    UPROPERTY()
+    TArray<UMaterialInstanceDynamic*> GhostMaterials;
 
     UPROPERTY()
     UNotificationWidget* NotificationWidgetInstance;
