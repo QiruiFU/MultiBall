@@ -46,6 +46,7 @@ ABallActor::ABallActor()
 	bHasSettled = false;
 	KillZ = 1.0f;
 	MaxLifespan = 15.0f;
+	SplitChanceOverride = -1.0f;
 }
 
 void ABallActor::BeginPlay()
@@ -155,11 +156,12 @@ void ABallActor::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 		}
 
 		// SplitChance: chance to spawn an extra ball on peg hit
+		// Native balls use the global skill chance; split balls inherit half their parent's chance.
 		USpecialSkillSubsystem* SkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
 		if (SkillSys)
 		{
-			float SplitChance = SkillSys->GetSplitChanceBonus();
-			if (SplitChance > 0.0f && FMath::FRand() < SplitChance)
+			float EffectiveSplitChance = (SplitChanceOverride >= 0.0f) ? SplitChanceOverride : SkillSys->GetSplitChanceBonus();
+			if (EffectiveSplitChance > 0.0f && FMath::FRand() < EffectiveSplitChance)
 			{
 				// Spawn a split ball at current location
 				FActorSpawnParameters SpawnParams;
@@ -167,10 +169,13 @@ void ABallActor::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 				ABallActor* SplitBall = GetWorld()->SpawnActor<ABallActor>(GetClass(), GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
 				if (SplitBall)
 				{
+					// Halve the split chance for the child ball
+					SplitBall->SplitChanceOverride = EffectiveSplitChance * 0.5f;
+
 					// Give the split ball a random sideways impulse
 					FVector Impulse = FVector(FMath::FRandRange(-200.0f, 200.0f), FMath::FRandRange(-200.0f, 200.0f), 100.0f);
 					SplitBall->CollisionComponent->AddImpulse(Impulse);
-					UE_LOG(LogTemp, Log, TEXT("Ball %s split! New ball spawned."), *GetName());
+					UE_LOG(LogTemp, Log, TEXT("Ball %s split! New ball spawned (child split chance: %.2f)."), *GetName(), SplitBall->SplitChanceOverride);
 				}
 			}
 		}

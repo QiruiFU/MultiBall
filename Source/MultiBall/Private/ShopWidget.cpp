@@ -5,6 +5,7 @@
 #include "Components/Border.h"
 #include "Components/TextBlock.h"
 #include "MultiBallPlayerState.h"
+#include "MultiBallPlayerController.h"
 #include "MultiBallGameMode.h"
 #include "PegActor.h"
 #include "BumperActor.h"
@@ -74,6 +75,15 @@ void UShopWidget::BuyItem(TSubclassOf<APlaceableActor> ItemClass)
 		PS->AddToInventory(ItemClass);
 		UE_LOG(LogTemp, Warning, TEXT(">>> ShopWidget: Bought %s for %d coins. Remaining: %d"),
 		       *GetNameSafe(ItemClass), CDO->Cost, PS->PlayerCoins);
+
+		// Immediately enter placement mode so the ghost preview follows the cursor.
+		// This gives a seamless "buy and place" experience without requiring
+		// the player to click the inventory panel first.
+		AMultiBallPlayerController* MPC = Cast<AMultiBallPlayerController>(PC);
+		if (MPC)
+		{
+			MPC->SelectPlaceable(ItemClass);
+		}
 	}
 	else
 	{

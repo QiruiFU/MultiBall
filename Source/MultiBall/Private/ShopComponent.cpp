@@ -2,6 +2,8 @@
 
 #include "ShopComponent.h"
 #include "MultiBallPlayerState.h"
+#include "MultiBallPlayerController.h"
+#include "Kismet/GameplayStatics.h"
 
 UShopComponent::UShopComponent()
 {
@@ -68,5 +70,15 @@ bool UShopComponent::TryPurchase(AMultiBallPlayerState* PlayerState, const FShop
 	PlayerState->AddToInventory(Item.PlaceableClass);
 	UE_LOG(LogTemp, Log, TEXT("ShopComponent: Purchased %s for %d coins. Remaining: %d"),
 	       *Item.DisplayName.ToString(), Item.Cost, PlayerState->PlayerCoins);
+
+	// Immediately enter placement mode so the ghost preview follows the cursor.
+	// This gives a seamless "buy and place" experience without clicking inventory.
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	AMultiBallPlayerController* MPC = Cast<AMultiBallPlayerController>(PC);
+	if (MPC)
+	{
+		MPC->SelectPlaceable(Item.PlaceableClass);
+	}
+
 	return true;
 }

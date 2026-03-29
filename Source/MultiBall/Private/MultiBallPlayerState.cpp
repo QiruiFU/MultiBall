@@ -3,6 +3,8 @@
 #include "MultiBallPlayerState.h"
 #include "PlaceableActor.h"
 #include "Net/UnrealNetwork.h"
+#include "MultiBallPlayerController.h"
+#include "Kismet/GameplayStatics.h"
 
 AMultiBallPlayerState::AMultiBallPlayerState()
 {
@@ -25,12 +27,23 @@ void AMultiBallPlayerState::AddToInventory(TSubclassOf<APlaceableActor> Placeabl
 {
 	if (!PlaceableClass) return;
 
+	AMultiBallPlayerController* MPC = Cast<AMultiBallPlayerController>(GetPlayerController());
+	if (!MPC)
+	{
+		MPC = Cast<AMultiBallPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	}
+
 	for (FInventoryEntry& Entry : Inventory)
 	{
 		if (Entry.PlaceableClass == PlaceableClass)
 		{
 			Entry.Count++;
 			OnInventoryChanged.Broadcast();
+
+			if (MPC && MPC->IsLocalController())
+			{
+				MPC->SelectPlaceable(PlaceableClass);
+			}
 			return;
 		}
 	}
@@ -40,6 +53,11 @@ void AMultiBallPlayerState::AddToInventory(TSubclassOf<APlaceableActor> Placeabl
 	NewEntry.Count = 1;
 	Inventory.Add(NewEntry);
 	OnInventoryChanged.Broadcast();
+
+	if (MPC && MPC->IsLocalController())
+	{
+		MPC->SelectPlaceable(PlaceableClass);
+	}
 }
 
 bool AMultiBallPlayerState::RemoveFromInventory(TSubclassOf<APlaceableActor> PlaceableClass)

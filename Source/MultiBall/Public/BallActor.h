@@ -80,6 +80,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ball")
 	float MaxLifespan;
 
+	/**
+	 * Override for split chance.  -1 = use global skill value (native ball).
+	 * Split balls receive parent_chance * 0.5 so each generation splits less.
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ball")
+	float SplitChanceOverride;
+
 protected:
 	virtual void BeginPlay() override;
 
