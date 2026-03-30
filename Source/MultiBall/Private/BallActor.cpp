@@ -94,6 +94,16 @@ void ABallActor::BeginPlay()
 		{
 			AccumulatedMultiplier += BonusMult;
 		}
+
+		// SlowMotion: reduce gravity on this ball
+		float SlowFactor = SkillSys->GetSlowMotionFactor();
+		if (SlowFactor < 1.0f)
+		{
+			CollisionComponent->SetEnableGravity(true);
+			// UE gravity scale trick: use custom gravity
+			CollisionComponent->SetLinearDamping(CollisionComponent->GetLinearDamping() + (1.0f - SlowFactor) * 2.0f);
+			UE_LOG(LogTemp, Log, TEXT("Ball %s: SlowMotion active (factor=%.2f, added damping=%.2f)"), *GetName(), SlowFactor, (1.0f - SlowFactor) * 2.0f);
+		}
 	}
 }
 
@@ -129,6 +139,40 @@ void ABallActor::Tick(float DeltaTime)
 	else
 	{
 		SettleTimer = 0.0f;
+	}
+
+	// MagnetBall: attract toward nearest placeable
+	USpecialSkillSubsystem* SkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
+	if (SkillSys)
+	{
+		float MagForce = SkillSys->GetMagnetForce();
+		if (MagForce > 0.0f)
+		{
+			FVector MyLoc = GetActorLocation();
+			float ClosestDist = 300.0f; // Max attraction range
+			FVector ClosestDir = FVector::ZeroVector;
+
+			TArray<AActor*> Placeables;
+			UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlaceableActor::StaticClass(), Placeables);
+			for (AActor* P : Placeables)
+			{
+				if (!P || !IsValid(P)) continue;
+				FVector Dir = P->GetActorLocation() - MyLoc;
+				float Dist = Dir.Size();
+				if (Dist > 10.0f && Dist < ClosestDist)
+				{
+					ClosestDist = Dist;
+					ClosestDir = Dir.GetSafeNormal();
+				}
+			}
+
+			if (!ClosestDir.IsZero())
+			{
+				// Force falls off with distance
+				float ForceMag = MagForce * (1.0f - ClosestDist / 300.0f);
+				CollisionComponent->AddForce(ClosestDir * ForceMag);
+			}
+		}
 	}
 }
 
@@ -168,7 +212,19 @@ void ABallActor::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 		UScoreSubsystem* ScoreSys = GetWorld()->GetSubsystem<UScoreSubsystem>();
 		if (ScoreSys)
 		{
-			ScoreSys->AddScore(AccumulatedChips, AccumulatedMultiplier);
+			// CriticalHit: chance to deal 3x chips
+			int32 FinalChips = AccumulatedChips;
+			USpecialSkillSubsystem* CritSkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
+			if (CritSkillSys)
+			{
+				float CritChance = CritSkillSys->GetCriticalHitChance();
+				if (CritChance > 0.0f && FMath::FRand() < CritChance)
+				{
+					FinalChips *= 3;
+					UE_LOG(LogTemp, Log, TEXT("Ball %s: CRITICAL HIT! 3x chips (%d -> %d)"), *GetName(), AccumulatedChips, FinalChips);
+				}
+			}
+			ScoreSys->AddScore(FinalChips, AccumulatedMultiplier);
 		}
 
 		// SplitChance: chance to spawn an extra ball on peg hit

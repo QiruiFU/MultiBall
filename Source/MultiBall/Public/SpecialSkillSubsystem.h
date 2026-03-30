@@ -61,6 +61,26 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
 	float GetBallScaleMultiplier() const;
 
+	/** Critical hit chance — balls have a chance to deal 3x chips on peg hit. (+15% per stack) */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
+	float GetCriticalHitChance() const;
+
+	/** Magnet force strength — balls are slightly attracted toward nearby pegs. (+500 per stack) */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
+	float GetMagnetForce() const;
+
+	/** Shop discount percentage — reduces item costs. (+15% per stack, max 50%) */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
+	float GetShopDiscount() const;
+
+	/** Slow motion factor — ball gravity reduced so it hits more pegs. (0.85^stacks) */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
+	float GetSlowMotionFactor() const;
+
+	/** Peg revive chance — broken pegs have a chance to revive after being hit. (+20% per stack) */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Skill")
+	float GetPegReviveChance() const;
+
 	/** Broadcast when a skill is activated. */
 	UPROPERTY(BlueprintAssignable, Category = "Skill")
 	FOnSkillActivated OnSkillActivated;

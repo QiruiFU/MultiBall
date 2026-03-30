@@ -3,6 +3,7 @@
 #include "ShopComponent.h"
 #include "MultiBallPlayerState.h"
 #include "MultiBallPlayerController.h"
+#include "SpecialSkillSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 
 UShopComponent::UShopComponent()
@@ -48,13 +49,28 @@ void UShopComponent::RefreshShop()
 	OnShopRefreshed.Broadcast();
 }
 
+int32 UShopComponent::GetDiscountedCost(int32 BaseCost) const
+{
+	USpecialSkillSubsystem* SkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
+	if (SkillSys)
+	{
+		float Discount = SkillSys->GetShopDiscount();
+		if (Discount > 0.0f)
+		{
+			return FMath::Max(1, FMath::RoundToInt(BaseCost * (1.0f - Discount)));
+		}
+	}
+	return BaseCost;
+}
+
 bool UShopComponent::CanAfford(AMultiBallPlayerState* PlayerState, const FShopItem& Item) const
 {
 	if (!PlayerState)
 	{
 		return false;
 	}
-	return PlayerState->PlayerCoins >= Item.Cost;
+	int32 EffectiveCost = GetDiscountedCost(Item.Cost);
+	return PlayerState->PlayerCoins >= EffectiveCost;
 }
 
 bool UShopComponent::TryPurchase(AMultiBallPlayerState* PlayerState, const FShopItem& Item)
@@ -66,13 +82,13 @@ bool UShopComponent::TryPurchase(AMultiBallPlayerState* PlayerState, const FShop
 		return false;
 	}
 
-	PlayerState->PlayerCoins -= Item.Cost;
+	int32 EffectiveCost = GetDiscountedCost(Item.Cost);
+	PlayerState->PlayerCoins -= EffectiveCost;
 	PlayerState->AddToInventory(Item.PlaceableClass);
-	UE_LOG(LogTemp, Log, TEXT("ShopComponent: Purchased %s for %d coins. Remaining: %d"),
-	       *Item.DisplayName.ToString(), Item.Cost, PlayerState->PlayerCoins);
+	UE_LOG(LogTemp, Log, TEXT("ShopComponent: Purchased %s for %d coins (base %d, discount applied). Remaining: %d"),
+	       *Item.DisplayName.ToString(), EffectiveCost, Item.Cost, PlayerState->PlayerCoins);
 
 	// Immediately enter placement mode so the ghost preview follows the cursor.
-	// This gives a seamless "buy and place" experience without clicking inventory.
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	AMultiBallPlayerController* MPC = Cast<AMultiBallPlayerController>(PC);
 	if (MPC)

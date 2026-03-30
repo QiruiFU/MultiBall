@@ -28,6 +28,11 @@ enum class ESpecialSkill : uint8
 	BonusMultiplier	UMETA(DisplayName = "Bonus Multiplier"),
 	ExtraCoins		UMETA(DisplayName = "Extra Coins"),
 	BiggerBalls		UMETA(DisplayName = "Bigger Balls"),
+	CriticalHit		UMETA(DisplayName = "Critical Hit"),
+	MagnetBall		UMETA(DisplayName = "Magnet Ball"),
+	ShopDiscount	UMETA(DisplayName = "Shop Discount"),
+	SlowMotion		UMETA(DisplayName = "Slow Motion"),
+	PegRevive		UMETA(DisplayName = "Peg Revive"),
 };
 
 /** Metadata describing a special skill for UI display. */

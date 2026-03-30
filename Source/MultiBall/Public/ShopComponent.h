@@ -50,6 +50,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Shop")
 	bool TryPurchase(AMultiBallPlayerState* PlayerState, const FShopItem& Item);
 
+	/** Get the effective cost after applying ShopDiscount skill. */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Shop")
+	int32 GetDiscountedCost(int32 BaseCost) const;
+
 protected:
 	virtual void BeginPlay() override;
 };

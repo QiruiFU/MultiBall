@@ -37,4 +37,11 @@ public:
 	/** Returns the current opponent's target score the player must beat. */
 	UFUNCTION(BlueprintPure, Category = "MultiBall|Score", meta = (WorldContext = "WorldContextObject"))
 	static int64 GetOpponentTargetScore(const UObject* WorldContextObject);
+
+	/**
+	 * Returns the effective shop price after applying any active Shop Discount skill.
+	 * bHasDiscount is true when a discount is active (use for strikethrough UI).
+	 */
+	UFUNCTION(BlueprintPure, Category = "MultiBall|Shop", meta = (WorldContext = "WorldContextObject"))
+	static int32 GetShopDisplayCost(const UObject* WorldContextObject, int32 BaseCost, bool& bHasDiscount);
 };

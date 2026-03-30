@@ -2,6 +2,7 @@
 
 #include "MultiBallBlueprintLibrary.h"
 #include "ScoreSubsystem.h"
+#include "SpecialSkillSubsystem.h"
 #include "MultiBallGameMode.h"
 #include "MultiBallPlayerState.h"
 #include "GameFramework/PlayerController.h"
@@ -93,4 +94,31 @@ int64 UMultiBallBlueprintLibrary::GetOpponentTargetScore(const UObject* WorldCon
 		return GM->GetCurrentOpponentTargetScore();
 	}
 	return 0;
+}
+
+int32 UMultiBallBlueprintLibrary::GetShopDisplayCost(const UObject* WorldContextObject, int32 BaseCost, bool& bHasDiscount)
+{
+	bHasDiscount = false;
+	if (!WorldContextObject)
+	{
+		return BaseCost;
+	}
+
+	UWorld* World = WorldContextObject->GetWorld();
+	if (!World)
+	{
+		return BaseCost;
+	}
+
+	USpecialSkillSubsystem* SkillSys = World->GetSubsystem<USpecialSkillSubsystem>();
+	if (SkillSys)
+	{
+		float Discount = SkillSys->GetShopDiscount();
+		if (Discount > 0.0f)
+		{
+			bHasDiscount = true;
+			return FMath::Max(1, FMath::RoundToInt(BaseCost * (1.0f - Discount)));
+		}
+	}
+	return BaseCost;
 }

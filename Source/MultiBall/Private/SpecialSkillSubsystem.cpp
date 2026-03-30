@@ -48,6 +48,41 @@ TArray<FSpecialSkillData> USpecialSkillSubsystem::GetAllSkillDefinitions()
 		D.Description = FText::FromString(TEXT("Balls grow 1.5x in size, hitting more pegs."));
 		All.Add(D);
 	}
+	{
+		FSpecialSkillData D;
+		D.SkillType = ESpecialSkill::CriticalHit;
+		D.DisplayName = FText::FromString(TEXT("Critical Hit"));
+		D.Description = FText::FromString(TEXT("+15% chance each peg hit deals 3x chips."));
+		All.Add(D);
+	}
+	{
+		FSpecialSkillData D;
+		D.SkillType = ESpecialSkill::MagnetBall;
+		D.DisplayName = FText::FromString(TEXT("Magnet Ball"));
+		D.Description = FText::FromString(TEXT("Balls are attracted toward nearby pegs."));
+		All.Add(D);
+	}
+	{
+		FSpecialSkillData D;
+		D.SkillType = ESpecialSkill::ShopDiscount;
+		D.DisplayName = FText::FromString(TEXT("Shop Discount"));
+		D.Description = FText::FromString(TEXT("All shop items cost 15% less (max 50% off)."));
+		All.Add(D);
+	}
+	{
+		FSpecialSkillData D;
+		D.SkillType = ESpecialSkill::SlowMotion;
+		D.DisplayName = FText::FromString(TEXT("Slow Motion"));
+		D.Description = FText::FromString(TEXT("Reduced gravity lets balls bounce more."));
+		All.Add(D);
+	}
+	{
+		FSpecialSkillData D;
+		D.SkillType = ESpecialSkill::PegRevive;
+		D.DisplayName = FText::FromString(TEXT("Peg Revive"));
+		D.Description = FText::FromString(TEXT("+20% chance broken pegs revive after hit."));
+		All.Add(D);
+	}
 
 	return All;
 }
@@ -131,4 +166,30 @@ float USpecialSkillSubsystem::GetBallScaleMultiplier() const
 {
 	int32 Stacks = CountSkill(ESpecialSkill::BiggerBalls);
 	return FMath::Pow(1.5f, static_cast<float>(Stacks));
+}
+
+float USpecialSkillSubsystem::GetCriticalHitChance() const
+{
+	return FMath::Min(CountSkill(ESpecialSkill::CriticalHit) * 0.15f, 0.75f);
+}
+
+float USpecialSkillSubsystem::GetMagnetForce() const
+{
+	return CountSkill(ESpecialSkill::MagnetBall) * 500.0f;
+}
+
+float USpecialSkillSubsystem::GetShopDiscount() const
+{
+	return FMath::Min(CountSkill(ESpecialSkill::ShopDiscount) * 0.15f, 0.50f);
+}
+
+float USpecialSkillSubsystem::GetSlowMotionFactor() const
+{
+	int32 Stacks = CountSkill(ESpecialSkill::SlowMotion);
+	return FMath::Pow(0.85f, static_cast<float>(Stacks));
+}
+
+float USpecialSkillSubsystem::GetPegReviveChance() const
+{
+	return FMath::Min(CountSkill(ESpecialSkill::PegRevive) * 0.20f, 0.80f);
 }

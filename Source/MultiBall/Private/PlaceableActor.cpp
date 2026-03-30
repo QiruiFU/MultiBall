@@ -3,10 +3,9 @@
 #include "PlaceableActor.h"
 #include "BallActor.h"
 #include "Components/SphereComponent.h"
-#include "BallActor.h"
-#include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "InteractionRuleComponent.h"
+#include "SpecialSkillSubsystem.h"
 
 #include "UObject/ConstructorHelpers.h"
 
@@ -118,8 +117,20 @@ void APlaceableActor::OnBallHit(ABallActor* Ball)
 		CurrentDurability--;
 		if (CurrentDurability <= 0)
 		{
-			bIsBroken = true;
-			UE_LOG(LogTemp, Log, TEXT("Placeable %s broke after reaching max durability."), *GetName());
+			// PegRevive: chance to revive instead of breaking
+			USpecialSkillSubsystem* SkillSys = GetWorld()->GetSubsystem<USpecialSkillSubsystem>();
+			float ReviveChance = SkillSys ? SkillSys->GetPegReviveChance() : 0.0f;
+			if (ReviveChance > 0.0f && FMath::FRand() < ReviveChance)
+			{
+				// Revive! Restore durability
+				CurrentDurability = MaxDurability;
+				UE_LOG(LogTemp, Log, TEXT("Placeable %s REVIVED! (%.0f%% chance)"), *GetName(), ReviveChance * 100.0f);
+			}
+			else
+			{
+				bIsBroken = true;
+				UE_LOG(LogTemp, Log, TEXT("Placeable %s broke after reaching max durability."), *GetName());
+			}
 		}
 	}
 

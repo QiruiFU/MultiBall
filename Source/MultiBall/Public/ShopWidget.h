@@ -11,6 +11,7 @@
 class UButton;
 class UBorder;
 class UTextBlock;
+class UShopComponent;
 
 /**
  * C++ base class for the Shop UI. Reparent WBP_ShopUI to this class
@@ -46,6 +47,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Shop")
 	void BuyItem(TSubclassOf<APlaceableActor> ItemClass);
 
+	/**
+	 * Get the display cost for an item, applying any active Shop Discount skill.
+	 * bHasDiscount is set to true when a discount is active — use this in the
+	 * UI to show the original price with a strikethrough.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Shop")
+	int32 GetDisplayCost(int32 BaseCost, bool& bHasDiscount) const;
+
 private:
 	/** Called when the game phase changes — shows/hides shop UI. */
 	UFUNCTION()
@@ -53,4 +62,8 @@ private:
 
 	/** Update the round text from the GameMode. */
 	void UpdateRoundText();
+
+	/** Locate the ShopComponent on the GameMode actor. */
+	UShopComponent* FindShopComponent() const;
 };
+

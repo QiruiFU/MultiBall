@@ -7,6 +7,7 @@
 #include "MultiBallPlayerState.h"
 #include "MultiBallPlayerController.h"
 #include "MultiBallGameMode.h"
+#include "ShopComponent.h"
 #include "PegActor.h"
 #include "BumperActor.h"
 #include "Kismet/GameplayStatics.h"
@@ -62,23 +63,28 @@ void UShopWidget::BuyItem(TSubclassOf<APlaceableActor> ItemClass)
 		return;
 	}
 
-	// Check cost
+	// Look up the ShopComponent for discount calculation
 	APlaceableActor* CDO = ItemClass->GetDefaultObject<APlaceableActor>();
 	if (!CDO)
 	{
 		return;
 	}
 
-	if (PS->PlayerCoins >= CDO->Cost)
+	int32 EffectiveCost = CDO->Cost;
+	UShopComponent* ShopComp = FindShopComponent();
+	if (ShopComp)
 	{
-		PS->PlayerCoins -= CDO->Cost;
+		EffectiveCost = ShopComp->GetDiscountedCost(CDO->Cost);
+	}
+
+	if (PS->PlayerCoins >= EffectiveCost)
+	{
+		PS->PlayerCoins -= EffectiveCost;
 		PS->AddToInventory(ItemClass);
-		UE_LOG(LogTemp, Warning, TEXT(">>> ShopWidget: Bought %s for %d coins. Remaining: %d"),
-		       *GetNameSafe(ItemClass), CDO->Cost, PS->PlayerCoins);
+		UE_LOG(LogTemp, Warning, TEXT(">>> ShopWidget: Bought %s for %d coins (base %d, discounted %d). Remaining: %d"),
+		       *GetNameSafe(ItemClass), EffectiveCost, CDO->Cost, EffectiveCost, PS->PlayerCoins);
 
 		// Immediately enter placement mode so the ghost preview follows the cursor.
-		// This gives a seamless "buy and place" experience without requiring
-		// the player to click the inventory panel first.
 		AMultiBallPlayerController* MPC = Cast<AMultiBallPlayerController>(PC);
 		if (MPC)
 		{
@@ -87,8 +93,8 @@ void UShopWidget::BuyItem(TSubclassOf<APlaceableActor> ItemClass)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT(">>> ShopWidget: Cannot afford %s. Cost: %d, Have: %d"),
-		       *GetNameSafe(ItemClass), CDO->Cost, PS->PlayerCoins);
+		UE_LOG(LogTemp, Warning, TEXT(">>> ShopWidget: Cannot afford %s. Discounted cost: %d, Have: %d"),
+		       *GetNameSafe(ItemClass), EffectiveCost, PS->PlayerCoins);
 	}
 }
 
@@ -118,4 +124,30 @@ void UShopWidget::UpdateRoundText()
 		RoundText->SetText(FText::FromString(
 			FString::Printf(TEXT("Round %d / %d"), GM->GetCurrentRound(), GM->MaxRounds)));
 	}
+}
+
+UShopComponent* UShopWidget::FindShopComponent() const
+{
+	AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	if (GM)
+	{
+		return GM->FindComponentByClass<UShopComponent>();
+	}
+	return nullptr;
+}
+
+int32 UShopWidget::GetDisplayCost(int32 BaseCost, bool& bHasDiscount) const
+{
+	bHasDiscount = false;
+	UShopComponent* ShopComp = FindShopComponent();
+	if (ShopComp)
+	{
+		int32 Discounted = ShopComp->GetDiscountedCost(BaseCost);
+		if (Discounted < BaseCost)
+		{
+			bHasDiscount = true;
+			return Discounted;
+		}
+	}
+	return BaseCost;
 }
