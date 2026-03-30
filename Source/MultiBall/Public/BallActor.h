@@ -3,9 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/AudioComponent.h"
 #include "GameFramework/Actor.h"
 #include "MultiBallTypes.h"
+#include <Sound/SoundBase.h>
 #include "BallActor.generated.h"
+
 
 class USphereComponent;
 class UProjectileMovementComponent;
@@ -87,6 +90,13 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ball")
 	float SplitChanceOverride;
 
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Audio)
+	UAudioComponent* MyAudioComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	USoundBase* HitSound; // or USoundCue*
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -110,6 +120,7 @@ private:
 	float SettleTimer;
 	bool bHasSettled;
 	FTimerHandle LifespanTimerHandle;
+	float timesHit;
 
 	/** Tracks the last time this ball hit a specific actor to enforce cooldown. */
 	TMap<AActor*, float> LastHitTimes;

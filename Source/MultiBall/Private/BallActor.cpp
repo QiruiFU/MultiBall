@@ -7,6 +7,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "SpecialSkillSubsystem.h"
 #include "UObject/ConstructorHelpers.h"
+#include <Kismet/GameplayStatics.h>
 
 ABallActor::ABallActor()
 {
@@ -47,6 +48,19 @@ ABallActor::ABallActor()
 	KillZ = 1.0f;
 	MaxLifespan = 15.0f;
 	SplitChanceOverride = -1.0f;
+
+	timesHit = 0;
+
+	MyAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("MyAudioComponent"));
+	MyAudioComponent->SetupAttachment(RootComponent);
+	MyAudioComponent->bAutoActivate = false; // Don't play on spawn
+	HitSound = LoadObject<USoundBase>(
+		nullptr,
+		TEXT("/Game/Sound/HitSound.HitSound")
+	);
+	UGameplayStatics::PrimeSound(HitSound);
+	MyAudioComponent->SetSound(HitSound);
+	
 }
 
 void ABallActor::BeginPlay()
@@ -144,8 +158,10 @@ void ABallActor::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 		}
 
 		// Update last hit time
+		timesHit++;
 		LastHitTimes.Add(OtherActor, CurrentTime);
-
+		MyAudioComponent->SetPitchMultiplier(1 + timesHit * 0.05);
+		MyAudioComponent->Play();
 		Placeable->OnBallHit(this);
 
 		// NEW mechanism: Add points to ScoreSubsystem IMMEDIATELY

@@ -20,7 +20,8 @@ void UAdditiveScoreRuleComponent::ApplyRule_Implementation(ABallActor* Ball, APl
 		
 		if (Placeable->WidgetInstance)
 		{
-			Placeable->WidgetInstance->OnScoreChanged(MultiplierAdded, false);
+			
+			
 		}
 
 		UE_LOG(LogTemp, Log, TEXT("[Scoring] AdditiveRule on %s: Added +%.2fx to %s. New Multiplier: %.2fx"),

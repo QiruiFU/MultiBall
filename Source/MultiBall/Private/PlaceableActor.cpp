@@ -124,6 +124,7 @@ void APlaceableActor::OnBallHit(ABallActor* Ball)
 	}
 
 	FScoreData BallScore = Ball->GetScoreData();
+	WidgetInstance->OnScoreChanged(BallScore.GetTotalScore(), false);
 	UE_LOG(LogTemp, Log, TEXT("Ball hit %s. Ball total: %d chips x%.2f mult = %lld"),
 	       *GetName(), BallScore.Chips, BallScore.Multiplier, BallScore.GetTotalScore());
 }
