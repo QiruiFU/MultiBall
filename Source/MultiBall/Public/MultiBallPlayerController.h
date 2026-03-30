@@ -32,6 +32,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Shop")
     void SelectPlaceable(TSubclassOf<APlaceableActor> PlaceableClass);
 
+    /** Store a durability override to be applied when this class is next placed. */
+    UFUNCTION(BlueprintCallable, Category = "Shop")
+    void SetPendingDurability(TSubclassOf<APlaceableActor> PlaceableClass, int32 MaxDurability);
+
     UFUNCTION(Server, Reliable, WithValidation)
     void PurchasePlaceable(TSubclassOf<APlaceableActor> PlaceableClass, FVector Location, FVector Offset);
 
@@ -107,6 +111,10 @@ private:
 
     UPROPERTY()
     TArray<UMaterialInstanceDynamic*> GhostMaterials;
+
+    /** Durability overrides from shop items, keyed by placeable class. */
+    UPROPERTY()
+    TMap<TSubclassOf<APlaceableActor>, int32> PendingDurabilityOverrides;
 
     UPROPERTY()
     UNotificationWidget* NotificationWidgetInstance;

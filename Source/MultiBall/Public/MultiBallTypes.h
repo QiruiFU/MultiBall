@@ -100,6 +100,10 @@ struct FShopItem
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop")
 	FText Description;
+
+	/** Max hits before breaking. 0 = indestructible. Overrides the actor's default if > 0. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shop", meta = (ClampMin = "0"))
+	int32 MaxDurability = 0;
 };
 
 /** Data describing a preset opponent. */

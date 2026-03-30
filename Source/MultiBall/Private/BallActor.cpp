@@ -3,6 +3,7 @@
 #include "BallActor.h"
 #include "PlaceableActor.h"
 #include "ScoreSubsystem.h"
+#include "BallEmitterActor.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "SpecialSkillSubsystem.h"
@@ -247,6 +248,24 @@ void ABallActor::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 					// Give the split ball a random sideways impulse
 					FVector Impulse = FVector(FMath::FRandRange(-200.0f, 200.0f), FMath::FRandRange(-200.0f, 200.0f), 100.0f);
 					SplitBall->CollisionComponent->AddImpulse(Impulse);
+
+					// Register with the emitter so round doesn't end early
+					ABallEmitterActor* Emitter = Cast<ABallEmitterActor>(GetOwner());
+					if (!Emitter)
+					{
+						// Fallback: find emitter in the world
+						TArray<AActor*> Emitters;
+						UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABallEmitterActor::StaticClass(), Emitters);
+						if (Emitters.Num() > 0)
+						{
+							Emitter = Cast<ABallEmitterActor>(Emitters[0]);
+						}
+					}
+					if (Emitter)
+					{
+						Emitter->RegisterBall(SplitBall);
+					}
+
 					UE_LOG(LogTemp, Log, TEXT("Ball %s split! New ball spawned (child split chance: %.2f)."), *GetName(), SplitBall->SplitChanceOverride);
 				}
 			}

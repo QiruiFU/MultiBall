@@ -94,6 +94,12 @@ bool UShopComponent::TryPurchase(AMultiBallPlayerState* PlayerState, const FShop
 	if (MPC)
 	{
 		MPC->SelectPlaceable(Item.PlaceableClass);
+
+		// Store durability override from shop config
+		if (Item.MaxDurability > 0)
+		{
+			MPC->SetPendingDurability(Item.PlaceableClass, Item.MaxDurability);
+		}
 	}
 
 	return true;

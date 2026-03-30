@@ -190,6 +190,14 @@ void AMultiBallPlayerController::SelectPlaceable(TSubclassOf<APlaceableActor> Pl
     }
 }
 
+void AMultiBallPlayerController::SetPendingDurability(TSubclassOf<APlaceableActor> PlaceableClass, int32 MaxDurability)
+{
+    if (PlaceableClass && MaxDurability > 0)
+    {
+        PendingDurabilityOverrides.Add(PlaceableClass, MaxDurability);
+    }
+}
+
 void AMultiBallPlayerController::HandlePlacementClick()
 {
     AMultiBallGameMode* GM = Cast<AMultiBallGameMode>(GetWorld()->GetAuthGameMode());
@@ -293,6 +301,16 @@ void AMultiBallPlayerController::PurchasePlaceable_Implementation(TSubclassOf<AP
             SpawnParams.Owner = this;
 
             APlaceableActor* SpawnedActor = GetWorld()->SpawnActor<APlaceableActor>(PlaceableClass, Location + Offset, FRotationMatrix::MakeFromZ(Offset.GetSafeNormal()).Rotator(), SpawnParams);
+
+            // Apply durability override from shop item config
+            if (SpawnedActor)
+            {
+                if (int32* DurOverride = PendingDurabilityOverrides.Find(PlaceableClass))
+                {
+                    SpawnedActor->InitDurability(*DurOverride);
+                    UE_LOG(LogTemp, Log, TEXT("Applied durability override %d to %s"), *DurOverride, *GetNameSafe(SpawnedActor));
+                }
+            }
 
             // Apply flip state if it's a flipper
             if (AFlipperActor* Flipper = Cast<AFlipperActor>(SpawnedActor))

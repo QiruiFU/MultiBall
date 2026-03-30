@@ -47,6 +47,8 @@ APlaceableActor::APlaceableActor()
 	bIsBroken = false;
 	bIsFixed = false;
 	FixedForRound = 0;
+	DurabilityBarComp = nullptr;
+	DurabilityBarInstance = nullptr;
 
 	
 	TSubclassOf<UUFloatingScoreWidget> WidgetClass = StaticLoadClass(UUFloatingScoreWidget::StaticClass(), nullptr, TEXT("/Game/UI/WBP_FloatingScoreHolder.WBP_FloatingScoreHolder_C"));
@@ -80,11 +82,43 @@ void APlaceableActor::BeginPlay()
 	Super::BeginPlay();
 	WidgetInstance = Cast<UUFloatingScoreWidget>(WidgetComponent->GetUserWidgetObject());
 	
-	// Initialise current durability from max
+	// Initialise durability and health bar from CDO defaults (if set)
 	if (MaxDurability > 0)
 	{
-		CurrentDurability = MaxDurability;
+		InitDurability(MaxDurability);
 	}
+}
+
+void APlaceableActor::InitDurability(int32 NewMaxDurability)
+{
+	if (NewMaxDurability <= 0)
+	{
+		return;
+	}
+
+	MaxDurability = NewMaxDurability;
+	CurrentDurability = NewMaxDurability;
+	bIsBroken = false;
+
+	// Create durability bar widget component if not already created
+	if (!DurabilityBarComp)
+	{
+		DurabilityBarComp = NewObject<UWidgetComponent>(this, TEXT("DurabilityBarComp"));
+		if (DurabilityBarComp)
+		{
+			DurabilityBarComp->SetupAttachment(RootComponent);
+			DurabilityBarComp->RegisterComponent();
+			DurabilityBarComp->SetWidgetSpace(EWidgetSpace::Screen);
+			DurabilityBarComp->SetWidgetClass(UDurabilityBarWidget::StaticClass());
+			DurabilityBarComp->SetRelativeLocation(FVector(0.0f, 0.0f, 40.0f));
+			DurabilityBarComp->SetDrawSize(FVector2D(60.0f, 10.0f));
+			DurabilityBarComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+			DurabilityBarInstance = Cast<UDurabilityBarWidget>(DurabilityBarComp->GetUserWidgetObject());
+		}
+	}
+
+	UpdateDurabilityBar();
 }
 
 void APlaceableActor::Tick(float DeltaTime)
@@ -115,6 +149,8 @@ void APlaceableActor::OnBallHit(ABallActor* Ball)
 	if (MaxDurability > 0)
 	{
 		CurrentDurability--;
+		UpdateDurabilityBar();
+
 		if (CurrentDurability <= 0)
 		{
 			// PegRevive: chance to revive instead of breaking
@@ -124,12 +160,20 @@ void APlaceableActor::OnBallHit(ABallActor* Ball)
 			{
 				// Revive! Restore durability
 				CurrentDurability = MaxDurability;
+				UpdateDurabilityBar();
 				UE_LOG(LogTemp, Log, TEXT("Placeable %s REVIVED! (%.0f%% chance)"), *GetName(), ReviveChance * 100.0f);
 			}
 			else
 			{
 				bIsBroken = true;
 				UE_LOG(LogTemp, Log, TEXT("Placeable %s broke after reaching max durability."), *GetName());
+
+				// Hide and disable collision immediately
+				SetActorHiddenInGame(true);
+				SetActorEnableCollision(false);
+
+				// Destroy after a brief delay (allows any in-flight scoring to finish)
+				SetLifeSpan(0.1f);
 			}
 		}
 	}
@@ -138,4 +182,21 @@ void APlaceableActor::OnBallHit(ABallActor* Ball)
 	WidgetInstance->OnScoreChanged(BallScore.GetTotalScore(), false);
 	UE_LOG(LogTemp, Log, TEXT("Ball hit %s. Ball total: %d chips x%.2f mult = %lld"),
 	       *GetName(), BallScore.Chips, BallScore.Multiplier, BallScore.GetTotalScore());
+}
+
+void APlaceableActor::UpdateDurabilityBar()
+{
+	if (!DurabilityBarComp || MaxDurability <= 0)
+	{
+		return;
+	}
+
+	bool bFullHealth = (CurrentDurability >= MaxDurability);
+	DurabilityBarComp->SetVisibility(!bFullHealth);
+
+	if (DurabilityBarInstance)
+	{
+		float Percent = static_cast<float>(CurrentDurability) / static_cast<float>(MaxDurability);
+		DurabilityBarInstance->SetPercent(Percent);
+	}
 }

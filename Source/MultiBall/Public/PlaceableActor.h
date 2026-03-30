@@ -7,6 +7,7 @@
 #include "MultiBallTypes.h"
 #include "Components/WidgetComponent.h"
 #include "UFloatingScoreWidget.h"
+#include "DurabilityBarWidget.h"
 #include "PlaceableActor.generated.h"
 
 class ABallActor;
@@ -52,6 +53,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Durability")
 	int32 MaxDurability;
 
+	/** Set durability at runtime (creates health bar if needed). Call after spawn. */
+	UFUNCTION(BlueprintCallable, Category = "Durability")
+	void InitDurability(int32 NewMaxDurability);
+
 	/** Current remaining hits. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Durability")
 	int32 CurrentDurability;
@@ -75,8 +80,15 @@ public:
 	UWidgetComponent* WidgetComponent;
 
 	UPROPERTY()
-
 	UUFloatingScoreWidget* WidgetInstance;
+
+	// --- Durability Bar ---
+
+	UPROPERTY()
+	UWidgetComponent* DurabilityBarComp;
+
+	UPROPERTY()
+	UDurabilityBarWidget* DurabilityBarInstance;
 
 	// --- Scoring Interface ---
 
@@ -86,6 +98,9 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+	/** Refresh the durability bar fill and visibility. */
+	void UpdateDurabilityBar();
 
 public:	
 	virtual void Tick(float DeltaTime) override;

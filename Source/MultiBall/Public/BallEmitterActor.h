@@ -43,6 +43,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Emitter")
 	void ClearAllBalls();
 
+	/** Register an externally spawned ball (e.g. split ball) for tracking. */
+	UFUNCTION(BlueprintCallable, Category = "Emitter")
+	void RegisterBall(ABallActor* Ball);
+
 	/** Broadcast when all balls in the sequence have settled or been destroyed. */
 	UPROPERTY(BlueprintAssignable, Category = "Emitter")
 	FOnAllBallsFinished OnAllBallsFinished;

@@ -154,6 +154,15 @@ void ABallEmitterActor::OnBallDestroyed(AActor* DestroyedActor)
 	}
 }
 
+void ABallEmitterActor::RegisterBall(ABallActor* Ball)
+{
+	if (!Ball) return;
+
+	ActiveBallCount++;
+	Ball->OnDestroyed.AddDynamic(this, &ABallEmitterActor::OnBallDestroyed);
+	UE_LOG(LogTemp, Log, TEXT("Emitter: Registered external ball %s. Active: %d"), *GetNameSafe(Ball), ActiveBallCount);
+}
+
 void ABallEmitterActor::ClearAllBalls()
 {
 	TArray<AActor*> FoundBalls;
