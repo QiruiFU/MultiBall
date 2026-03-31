@@ -8,6 +8,11 @@
 
 ARailActor::ARailActor()
 {
+	FString matName = "/Game/BlueMat.BlueMat";
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> matAsset(*matName);
+	UMaterialInterface* mat = matAsset.Object;
+	MeshComponent->SetMaterial(0, mat);
+
 	PlaceableType = EPlaceableType::Rail;
 	Cost = 30;
 	MaxDurability = 15;
