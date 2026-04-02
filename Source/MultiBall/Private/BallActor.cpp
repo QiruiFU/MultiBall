@@ -6,13 +6,21 @@
 #include "BallEmitterActor.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/PlayerController.h"
 #include "SpecialSkillSubsystem.h"
+#include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
 #include <Kismet/GameplayStatics.h>
+#include "MultiBallPlayerController.h"
 
 ABallActor::ABallActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	bReplicates = true;
+	SetReplicatingMovement(true);
 
 	// Collision sphere (root)
 	CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionComponent"));
@@ -33,6 +41,37 @@ ABallActor::ABallActor()
 	{
 		MeshComponent->SetStaticMesh(SphereMesh.Object);
 	}
+
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> MetalMaterial(TEXT("/Game/MetalBall.MetalBall"));
+	if (MetalMaterial.Succeeded())
+	{
+		MeshComponent->SetMaterial(0, MetalMaterial.Object);
+	}
+
+	// Spring Arm setup for over-the-shoulder
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	SpringArm->SetupAttachment(RootComponent);
+
+	// Use purely absolute rotation so the ball's physics don't interfere
+	SpringArm->SetUsingAbsoluteRotation(true);
+	
+	// Pitch: -89 (Looks straight down along the board's Z axis)
+	// Yaw: 90 (Makes the 'Up' vector point away from the board, so the board becomes the 'floor')
+	SpringArm->SetRelativeRotation(FRotator(-35.0f, 90.0f, 0.0f));
+	
+	SpringArm->TargetArmLength = 400.0f; // This pulls the camera 300 units UP (above the ball)
+	SpringArm->SocketOffset = FVector(0.0f, 0.0f, 150.0f); // This pushes the camera 150 units OUT from the board
+	SpringArm->bDoCollisionTest = false; // Crucial: prevents glass from squishing camera
+	SpringArm->bEnableCameraLag = true;
+	SpringArm->CameraLagSpeed = 10.0f;
+	// Do NOT inherit rotation from physics ball!
+	SpringArm->bInheritPitch = false;
+	SpringArm->bInheritYaw = false;
+	SpringArm->bInheritRoll = false;
+
+	// Follow Camera
+	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 
 	// Scoring defaults
 	BaseChips = 5;
@@ -62,6 +101,15 @@ ABallActor::ABallActor()
 	UGameplayStatics::PrimeSound(HitSound);
 	MyAudioComponent->SetSound(HitSound);
 	
+}
+
+void ABallActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ABallActor, AccumulatedChips);
+	DOREPLIFETIME(ABallActor, AccumulatedMultiplier);
+	DOREPLIFETIME(ABallActor, bHasSettled);
 }
 
 void ABallActor::BeginPlay()
@@ -234,6 +282,15 @@ void ABallActor::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 		if (SkillSys)
 		{
 			float EffectiveSplitChance = (SplitChanceOverride >= 0.0f) ? SplitChanceOverride : SkillSys->GetSplitChanceBonus();
+			
+			// Inject the director cheat!
+			APlayerController* PC = GetWorld()->GetFirstPlayerController();
+			AMultiBallPlayerController* MBPC = Cast<AMultiBallPlayerController>(PC);
+			if (MBPC)
+			{
+				EffectiveSplitChance += MBPC->CheatSplitChanceBonus;
+			}
+
 			if (EffectiveSplitChance > 0.0f && FMath::FRand() < EffectiveSplitChance)
 			{
 				// Spawn a split ball at current location
@@ -242,7 +299,7 @@ void ABallActor::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 				ABallActor* SplitBall = GetWorld()->SpawnActor<ABallActor>(GetClass(), GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
 				if (SplitBall)
 				{
-					// Halve the split chance for the child ball
+					// Restore split chance decay (halving each time) to prevent infinite loops outside of videos
 					SplitBall->SplitChanceOverride = EffectiveSplitChance * 0.5f;
 
 					// Give the split ball a random sideways impulse
@@ -264,6 +321,14 @@ void ABallActor::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
 					if (Emitter)
 					{
 						Emitter->RegisterBall(SplitBall);
+					}
+
+					if (PC)
+					{
+						if (!MBPC || MBPC->bFollowCamEnabled)
+						{
+							PC->SetViewTargetWithBlend(SplitBall, 0.3f);
+						}
 					}
 
 					UE_LOG(LogTemp, Log, TEXT("Ball %s split! New ball spawned (child split chance: %.2f)."), *GetName(), SplitBall->SplitChanceOverride);
@@ -308,6 +373,13 @@ void ABallActor::SettleBall()
 
 	// Broadcast score finalized
 	OnBallScoreFinalized.Broadcast(AccumulatedChips, AccumulatedMultiplier);
+
+	// Revert ViewTarget to BoardCamera (Pawn) if we are the current view target
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (PC && PC->GetViewTarget() == this)
+	{
+		PC->SetViewTargetWithBlend(PC->GetPawn(), 0.5f);
+	}
 
 	// Destroy after a short delay for visual feedback
 	SetLifeSpan(0.5f);

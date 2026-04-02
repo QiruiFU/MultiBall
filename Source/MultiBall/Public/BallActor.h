@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Net/UnrealNetwork.h"
 #include "Components/AudioComponent.h"
 #include "GameFramework/Actor.h"
 #include "MultiBallTypes.h"
@@ -12,6 +13,8 @@
 
 class USphereComponent;
 class UProjectileMovementComponent;
+class USpringArmComponent;
+class UCameraComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBallScoreFinalized, int32, Chips, float, Multiplier);
 
@@ -65,6 +68,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* MeshComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	USpringArmComponent* SpringArm;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	UCameraComponent* Camera;
+
 	// --- Physics Settings ---
 
 	/** Velocity threshold below which the ball is considered settled. */
@@ -99,6 +108,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
 	virtual void Tick(float DeltaTime) override;
@@ -115,9 +125,15 @@ private:
 	/** Finalize score and destroy the ball. */
 	void SettleBall();
 
+	UPROPERTY(Replicated)
 	int32 AccumulatedChips;
+
+	UPROPERTY(Replicated)
 	float AccumulatedMultiplier;
+
 	float SettleTimer;
+
+	UPROPERTY(Replicated)
 	bool bHasSettled;
 	FTimerHandle LifespanTimerHandle;
 	float timesHit;

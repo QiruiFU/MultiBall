@@ -154,7 +154,8 @@ void ABoardCameraPawn::Tick(float DeltaTime)
 	Location.Z = FMath::Clamp(Location.Z, BoardCenter.Z - PanBoundsZ, BoardCenter.Z + PanBoundsZ);
 	SetActorLocation(Location);
 
-	// Debug: show camera info
+	// Debug: show camera info (Disabled)
+	/*
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::Green,
@@ -166,6 +167,7 @@ void ABoardCameraPawn::Tick(float DeltaTime)
 				BoardCenter.Z - PanBoundsZ, BoardCenter.Z + PanBoundsZ,
 				BoardCenter.X - PanBoundsX, BoardCenter.X + PanBoundsX));
 	}
+	*/
 }
 
 void ABoardCameraPawn::OnScrollUp()

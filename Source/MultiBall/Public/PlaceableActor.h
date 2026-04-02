@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Net/UnrealNetwork.h"
 #include "MultiBallTypes.h"
 #include "Components/WidgetComponent.h"
 #include "UFloatingScoreWidget.h"
@@ -50,7 +51,7 @@ public:
 	// --- Durability ---
 
 	/** Maximum hits before this placeable breaks. 0 = indestructible. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Durability")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Durability")
 	int32 MaxDurability;
 
 	/** Set durability at runtime (creates health bar if needed). Call after spawn. */
@@ -58,11 +59,11 @@ public:
 	void InitDurability(int32 NewMaxDurability);
 
 	/** Current remaining hits. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Durability")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Durability")
 	int32 CurrentDurability;
 
 	/** Whether this placeable is broken and no longer scores. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Durability")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Durability")
 	bool bIsBroken;
 
 	// --- Collision ---
@@ -98,6 +99,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	/** Refresh the durability bar fill and visibility. */
 	void UpdateDurabilityBar();

@@ -12,7 +12,8 @@ void UScoreSubsystem::AddScore(int32 Chips, float Multiplier)
 	UE_LOG(LogTemp, Log, TEXT("ScoreSubsystem: Hit scored %lld (%d chips x %.2f mult). Base round total: %lld"),
 	       HitPoints, Chips, Multiplier, RoundScore);
 
-	// On-screen debug display
+	// On-screen debug display (Disabled per user request)
+	/*
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow,
@@ -20,6 +21,7 @@ void UScoreSubsystem::AddScore(int32 Chips, float Multiplier)
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan,
 			FString::Printf(TEXT("Round Total (pre-skill): %lld"), RoundScore));
 	}
+	*/
 
 	OnRoundScoreUpdated.Broadcast(RoundScore);
 }

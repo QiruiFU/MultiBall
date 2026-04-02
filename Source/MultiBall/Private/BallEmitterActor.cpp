@@ -4,12 +4,17 @@
 #include "BallActor.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
+#include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Kismet/GameplayStatics.h"
+#include "MultiBallPlayerController.h"
 
 ABallEmitterActor::ABallEmitterActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	bReplicates = true;
 
 	EmitterMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EmitterMesh"));
 	EmitterMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -38,6 +43,14 @@ ABallEmitterActor::ABallEmitterActor()
 	DropTimer = 0.0f;
 	ActiveBallCount = 0;
 	OscillationTime = 0.0f;
+}
+
+void ABallEmitterActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ABallEmitterActor, bIsDropping);
+	DOREPLIFETIME(ABallEmitterActor, BallsRemaining);
 }
 
 void ABallEmitterActor::BeginPlay()
@@ -136,6 +149,17 @@ void ABallEmitterActor::DropBall()
 	{
 		ActiveBallCount++;
 		NewBall->OnDestroyed.AddDynamic(this, &ABallEmitterActor::OnBallDestroyed);
+
+		// Follow newest ball with camera (only if enabled)
+		APlayerController* PC = GetWorld()->GetFirstPlayerController();
+		if (PC)
+		{
+			AMultiBallPlayerController* MBPC = Cast<AMultiBallPlayerController>(PC);
+			if (!MBPC || MBPC->bFollowCamEnabled)
+			{
+				PC->SetViewTargetWithBlend(NewBall, 0.3f);
+			}
+		}
 
 		UE_LOG(LogTemp, Log, TEXT("Emitter: Dropped ball. Active: %d"), ActiveBallCount);
 	}

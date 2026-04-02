@@ -23,7 +23,7 @@ ABumperActor::ABumperActor()
 	// Larger collision for bumpers
 	if (CollisionComponent)
 	{
-		CollisionComponent->InitSphereRadius(30.0f);
+		CollisionComponent->InitSphereRadius(40.0f);
 	}
 }
 

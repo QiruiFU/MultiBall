@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Net/UnrealNetwork.h"
 #include "GameFramework/Actor.h"
 #include "BallEmitterActor.generated.h"
 
@@ -94,6 +95,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
 	virtual void Tick(float DeltaTime) override;
@@ -106,8 +108,12 @@ private:
 	float OscillationTime;
 
 	// Drop sequence state
+	UPROPERTY(Replicated)
 	bool bIsDropping;
+
+	UPROPERTY(Replicated)
 	int32 BallsRemaining;
+
 	float DropTimer;
 
 	// Track active balls

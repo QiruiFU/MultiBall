@@ -23,12 +23,16 @@
 #include "GameOverWidget.h"
 #include "ScoreSubsystem.h"
 #include "BallEmitterActor.h"
+#include "BallActor.h"
+#include "Kismet/GameplayStatics.h"
 
 AMultiBallPlayerController::AMultiBallPlayerController()
 {
     bShowMouseCursor = true;
     bGhostFlipped = false;
     bEnableClickEvents = true;
+    bFollowCamEnabled = false; // Fixed board mode by default
+    CheatSplitChanceBonus = 0.0f;
     BuildWidget = nullptr;
     GhostPreviewActor = nullptr;
     NotificationWidgetInstance = nullptr;
@@ -143,6 +147,12 @@ void AMultiBallPlayerController::SetupInputComponent()
     InputComponent->BindKey(EKeys::SpaceBar, IE_Pressed, this, &AMultiBallPlayerController::HandleSpacebarPressed);
     InputComponent->BindKey(EKeys::SpaceBar, IE_Released, this, &AMultiBallPlayerController::HandleSpacebarReleased);
 
+    // Toggle camera view
+    InputComponent->BindKey(EKeys::O, IE_Pressed, this, &AMultiBallPlayerController::HandleToggleCamera);
+
+    // Increase split chance cheat
+    InputComponent->BindKey(EKeys::I, IE_Pressed, this, &AMultiBallPlayerController::HandleIncreaseSplitChance);
+
     // Debug key bindings: 1=Shop, 2=Drop, P=Cheat Win
     InputComponent->BindKey(EKeys::One, IE_Pressed, this, &AMultiBallPlayerController::DebugEnterShop);
     InputComponent->BindKey(EKeys::Two, IE_Pressed, this, &AMultiBallPlayerController::DebugEnterDrop);
@@ -160,6 +170,40 @@ void AMultiBallPlayerController::HandleSpacebarPressed()
 void AMultiBallPlayerController::HandleSpacebarReleased()
 {
     OnSpacebarAction.Broadcast(false);
+}
+
+void AMultiBallPlayerController::HandleToggleCamera()
+{
+    bFollowCamEnabled = !bFollowCamEnabled;
+    
+    if (!bFollowCamEnabled)
+    {
+        // Revert to Board camera immediately
+        if (GetPawn())
+        {
+            SetViewTargetWithBlend(GetPawn(), 0.5f);
+        }
+    }
+    else
+    {
+        // Try to snap to an active ball immediately
+        TArray<AActor*> Balls;
+        UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABallActor::StaticClass(), Balls);
+        if (Balls.Num() > 0)
+        {
+            SetViewTargetWithBlend(Balls[0], 0.5f);
+        }
+    }
+
+    FString Msg = bFollowCamEnabled ? TEXT("Camera: FOLLOW BALL") : TEXT("Camera: FIXED BOARD");
+    ShowNotification(Msg, 1.5f, FLinearColor::Yellow);
+}
+
+void AMultiBallPlayerController::HandleIncreaseSplitChance()
+{
+    CheatSplitChanceBonus += 0.2f; // Increase by 20%
+    FString Msg = FString::Printf(TEXT("Director Cheat: Split Chance Bonus +20%% (Total added: %.0f%%)"), CheatSplitChanceBonus * 100.0f);
+    ShowNotification(Msg, 1.5f, FLinearColor::Green);
 }
 
 void AMultiBallPlayerController::Tick(float DeltaTime)

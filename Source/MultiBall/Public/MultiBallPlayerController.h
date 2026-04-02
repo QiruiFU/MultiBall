@@ -46,6 +46,14 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Input")
     FOnSpacebarAction OnSpacebarAction;
 
+    /** Whether the 3D follow camera should be used when a ball drops */
+    UPROPERTY(BlueprintReadWrite, Category = "Camera")
+    bool bFollowCamEnabled;
+
+    /** Cheat bonus added to split chance (pressed via I) */
+    UPROPERTY(BlueprintReadWrite, Category = "Cheat")
+    float CheatSplitChanceBonus;
+
 protected:
     virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
@@ -54,6 +62,8 @@ protected:
     void HandlePlacementClick();
     void HandleSpacebarPressed();
     void HandleSpacebarReleased();
+    void HandleToggleCamera();
+    void HandleIncreaseSplitChance();
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
     TSubclassOf<class UUserWidget> ShopWidgetClass;

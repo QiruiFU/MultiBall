@@ -6,12 +6,15 @@
 #include "Components/StaticMeshComponent.h"
 #include "InteractionRuleComponent.h"
 #include "SpecialSkillSubsystem.h"
+#include "Net/UnrealNetwork.h"
 
 #include "UObject/ConstructorHelpers.h"
 
 APlaceableActor::APlaceableActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	bReplicates = true;
 
 	// Collision primitive (root)
 	CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionComponent"));
@@ -20,7 +23,7 @@ APlaceableActor::APlaceableActor()
 	SetRootComponent(CollisionComponent);
 
 	PlacementBlockingRadius = CreateDefaultSubobject<USphereComponent>(TEXT("PlacementBlockingRadius"));
-	PlacementBlockingRadius->InitSphereRadius(60.0f);
+	PlacementBlockingRadius->InitSphereRadius(40.0f);
 	PlacementBlockingRadius->SetCollisionProfileName(TEXT("QueryOnly"));
 	PlacementBlockingRadius->SetCollisionResponseToAllChannels(ECR_Ignore);
 	PlacementBlockingRadius->SetCollisionResponseToChannel(ECC_Visibility, ECR_Overlap);
@@ -75,6 +78,15 @@ APlaceableActor::APlaceableActor()
 		UE_LOG(LogTemp, Log, TEXT("WidgetBlueprintNotFound"));
 	}
 	
+}
+
+void APlaceableActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APlaceableActor, MaxDurability);
+	DOREPLIFETIME(APlaceableActor, CurrentDurability);
+	DOREPLIFETIME(APlaceableActor, bIsBroken);
 }
 
 void APlaceableActor::BeginPlay()
